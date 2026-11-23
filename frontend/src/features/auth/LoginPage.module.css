@@ -1,0 +1,54 @@
+.form {
+  width: 100%;
+}
+
+.label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: var(--mantine-color-text);
+}
+
+.input {
+  min-height: 44px;
+}
+
+.alert {
+  border: 1px solid color-mix(in srgb, var(--mantine-color-red-6) 25%, transparent);
+}
+
+.submit {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.hint {
+  letter-spacing: 0.01em;
+}
+
+.demoRoles {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.demoFill {
+  color: var(--mantine-color-brand-6);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--mantine-color-brand-6) 28%, transparent);
+  background: color-mix(in srgb, var(--mantine-color-brand-6) 8%, transparent);
+}
+
+[data-mantine-color-scheme='dark'] .demoFill {
+  color: var(--mantine-color-brand-4);
+  border-color: rgba(96, 165, 250, 0.28);
+  background: rgba(96, 165, 250, 0.1);
+}
+
+.demoFill:hover {
+  background: color-mix(in srgb, var(--mantine-color-brand-6) 14%, transparent);
+}

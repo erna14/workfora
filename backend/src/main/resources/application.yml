@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: workfora
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: non_null
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 25MB
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-message: never
+
+workfora:
+  jwt:
+    secret: ${JWT_SECRET:change-me-to-a-very-long-secret-key-for-workfora-dev-only-32chars}
+    access-token-minutes: ${JWT_ACCESS_MINUTES:15}
+    refresh-token-days: ${JWT_REFRESH_DAYS:7}
+  cors:
+    allowed-origins: ${CORS_ORIGINS:http://localhost:5173}
+  storage:
+    documents-path: ${DOCUMENTS_PATH:./data/documents}
+
+logging:
+  level:
+    com.workfora: INFO
+    org.springframework.security: WARN

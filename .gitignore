@@ -1,0 +1,26 @@
+# Backend
+backend/target/
+backend/data/
+backend/*.log
+backend/test-out*.txt
+backend/.idea/
+backend/*.iml
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+
+# IDE / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+application-local-secrets.yml

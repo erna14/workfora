@@ -1,0 +1,12 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:workfora}
+    username: ${DB_USER:workfora}
+    password: ${DB_PASSWORD:workfora}
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
