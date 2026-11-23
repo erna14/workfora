@@ -11,7 +11,7 @@ Modern, enterprise-grade Human Resource Management System (HRMS).
 - Java 21+
 - Node.js 20+
 - Maven 3.9+ (or use `backend/mvnw`)
-- Optional: Docker for PostgreSQL
+- Optional: Docker (full stack or PostgreSQL only)
 
 ### 1. Backend
 
@@ -42,10 +42,32 @@ App: `http://localhost:5173` (proxies `/api` → backend)
 | `manager@workfora.com` | `Admin123!` | Department Manager |
 | `employee@workfora.com` | `Admin123!` | Employee |
 
-## PostgreSQL (optional)
+## Run everything with Docker
+
+From the repo root:
 
 ```bash
-docker compose up -d
+docker compose up --build
+```
+
+Open the app at **http://localhost:8080** (override with `WORKFORA_HTTP_PORT`, e.g. `WORKFORA_HTTP_PORT=3000 docker compose up --build`).
+
+This starts PostgreSQL, the Spring Boot API, and the production frontend (nginx serves the UI and proxies `/api` to the backend). Uploads persist in the `workfora_documents` volume.
+
+Stop and remove containers:
+
+```bash
+docker compose down
+```
+
+Postgres data is kept in `workfora_pg_data` until you run `docker compose down -v`.
+
+### PostgreSQL only (local dev)
+
+To run just the database while developing on the host (publishes **localhost:5432** unless you set `POSTGRES_PUBLISH_PORT`):
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.host-db.yml up -d postgres
 ```
 
 Then run the backend with:

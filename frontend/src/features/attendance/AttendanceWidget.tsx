@@ -43,7 +43,8 @@ export function AttendanceWidget() {
     return () => window.clearInterval(id)
   }, [live])
 
-  const elapsed = computeLiveElapsed(query.data, now)
+  const syncedAt = query.dataUpdatedAt || now
+  const elapsed = computeLiveElapsed(query.data, now, syncedAt)
   const busy =
     checkIn.isPending || checkOut.isPending || startBreak.isPending || endBreak.isPending
 

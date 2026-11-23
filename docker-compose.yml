@@ -6,8 +6,6 @@ services:
       POSTGRES_DB: workfora
       POSTGRES_USER: workfora
       POSTGRES_PASSWORD: workfora
-    ports:
-      - "5432:5432"
     volumes:
       - workfora_pg_data:/var/lib/postgresql/data
     healthcheck:
@@ -16,5 +14,39 @@ services:
       timeout: 5s
       retries: 10
 
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: workfora-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: postgres
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: workfora
+      DB_USER: workfora
+      DB_PASSWORD: workfora
+      JWT_SECRET: change-me-to-a-very-long-secret-key-for-workfora-dev-only-32chars
+      CORS_ORIGINS: http://localhost:${WORKFORA_HTTP_PORT:-8080}
+      DOCUMENTS_PATH: /data/documents
+    volumes:
+      - workfora_documents:/data/documents
+    expose:
+      - "8080"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: workfora-frontend
+    depends_on:
+      - backend
+    ports:
+      - "${WORKFORA_HTTP_PORT:-8080}:80"
+
 volumes:
   workfora_pg_data:
+  workfora_documents:

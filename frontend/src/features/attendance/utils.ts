@@ -26,14 +26,17 @@ export function sessionLabel(state: string | undefined): string {
 export function computeLiveElapsed(
   today: AttendanceToday | undefined,
   nowMs: number,
+  /** Client time when `today` was last loaded — defaults to `nowMs` (no extrapolation). */
+  syncedAtMs: number = nowMs,
 ): { gross: number; breakSeconds: number; net: number } {
   if (!today?.record?.checkInAt) {
     return { gross: 0, breakSeconds: 0, net: 0 }
   }
 
   const serverMs = new Date(today.serverTime).getTime()
-  const skew = Number.isFinite(serverMs) ? nowMs - serverMs : 0
-  const approxNow = nowMs - skew
+  const approxNow = Number.isFinite(serverMs)
+    ? serverMs + Math.max(0, nowMs - syncedAtMs)
+    : nowMs
 
   if (today.record.checkOutAt) {
     return {

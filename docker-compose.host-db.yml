@@ -1,0 +1,6 @@
+# Optional override: expose PostgreSQL on the host (default localhost:5432).
+# Usage: docker compose -f docker-compose.yml -f docker-compose.host-db.yml up -d postgres
+services:
+  postgres:
+    ports:
+      - "${POSTGRES_PUBLISH_PORT:-5432}:5432"
