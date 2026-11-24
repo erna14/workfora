@@ -1,5 +1,6 @@
 package com.workfora.asset;
 
+import com.workfora.security.SecurityUtils;
 import com.workfora.asset.domain.Asset;
 import com.workfora.asset.domain.AssetAssignment;
 import com.workfora.asset.domain.AssetCategory;
@@ -7,7 +8,6 @@ import com.workfora.asset.dto.AssetDtos.*;
 import com.workfora.asset.repository.AssetAssignmentRepository;
 import com.workfora.asset.repository.AssetCategoryRepository;
 import com.workfora.asset.repository.AssetRepository;
-import com.workfora.common.OrgConstants;
 import com.workfora.common.exception.BusinessException;
 import com.workfora.common.exception.ResourceNotFoundException;
 import java.time.Instant;
@@ -36,14 +36,14 @@ public class AssetService {
 
     @Transactional(readOnly = true)
     public Page<CategoryResponse> listCategories(Pageable pageable) {
-        return categoryRepository.findByOrganizationId(OrgConstants.DEFAULT_ORG_ID, pageable)
+        return categoryRepository.findByOrganizationId(SecurityUtils.requireOrganizationId(), pageable)
                 .map(c -> new CategoryResponse(c.getId(), c.getName(), c.getDescription()));
     }
 
     @Transactional
     public CategoryResponse createCategory(CategoryRequest request) {
         AssetCategory category = new AssetCategory();
-        category.setOrganizationId(OrgConstants.DEFAULT_ORG_ID);
+        category.setOrganizationId(SecurityUtils.requireOrganizationId());
         category.setName(request.name());
         category.setDescription(request.description());
         AssetCategory saved = categoryRepository.save(category);
@@ -52,13 +52,13 @@ public class AssetService {
 
     @Transactional(readOnly = true)
     public Page<AssetResponse> listAssets(Pageable pageable) {
-        return assetRepository.findByOrganizationId(OrgConstants.DEFAULT_ORG_ID, pageable).map(this::toAsset);
+        return assetRepository.findByOrganizationId(SecurityUtils.requireOrganizationId(), pageable).map(this::toAsset);
     }
 
     @Transactional
     public AssetResponse createAsset(AssetRequest request) {
         Asset asset = new Asset();
-        asset.setOrganizationId(OrgConstants.DEFAULT_ORG_ID);
+        asset.setOrganizationId(SecurityUtils.requireOrganizationId());
         asset.setAssetTag(request.assetTag());
         asset.setName(request.name());
         asset.setCategoryId(request.categoryId());

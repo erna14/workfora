@@ -17,3 +17,7 @@ spring:
 workfora:
   jwt:
     secret: test-secret-key-please-change-in-production-32chars
+  registration:
+    frontend-base-url: http://localhost:5173
+    expose-verification-token: true
+    verification-token-hours: 24

@@ -1,4 +1,5 @@
 package com.workfora.notification.repository;
+
 import com.workfora.notification.domain.Notification;
 import java.util.UUID;
 import org.springframework.data.domain.Page;

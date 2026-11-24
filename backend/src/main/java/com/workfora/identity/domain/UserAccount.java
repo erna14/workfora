@@ -25,8 +25,14 @@ public class UserAccount extends BaseEntity {
     @Column(nullable = false)
     private boolean enabled = true;
 
+    @Column(name = "email_verified", nullable = false)
+    private boolean emailVerified = false;
+
     @Column(name = "employee_id")
     private UUID employeeId;
+
+    @Column(name = "organization_id")
+    private UUID organizationId;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
@@ -60,12 +66,28 @@ public class UserAccount extends BaseEntity {
         this.enabled = enabled;
     }
 
+    public boolean isEmailVerified() {
+        return emailVerified;
+    }
+
+    public void setEmailVerified(boolean emailVerified) {
+        this.emailVerified = emailVerified;
+    }
+
     public UUID getEmployeeId() {
         return employeeId;
     }
 
     public void setEmployeeId(UUID employeeId) {
         this.employeeId = employeeId;
+    }
+
+    public UUID getOrganizationId() {
+        return organizationId;
+    }
+
+    public void setOrganizationId(UUID organizationId) {
+        this.organizationId = organizationId;
     }
 
     public Set<Role> getRoles() {

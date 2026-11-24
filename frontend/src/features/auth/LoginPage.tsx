@@ -1,7 +1,7 @@
 import { Anchor, Button, Checkbox, PasswordInput, TextInput, UnstyledButton } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
 import { useForm } from '@tanstack/react-form'
-import { Navigate, useLocation, useNavigate } from 'react-router'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router'
 import { useAuth } from '../../app/providers/AuthProvider'
 import { ApiError } from '../../types/api'
 import { loginSchema } from './schemas'
@@ -58,7 +58,7 @@ function loginFailureNotice(error: unknown): { title: string; message: string } 
       return {
         title: 'Access denied',
         message:
-          'This account is not allowed to sign in. Contact your administrator if you need access.',
+          'This account cannot sign in yet. If you just registered, verify your email first.',
       }
     }
     if (error.status >= 500) {
@@ -265,6 +265,13 @@ export default function LoginPage() {
             </Button>
           )}
         </form.Subscribe>
+
+        <p className={classes.demoHint} style={{ marginTop: '1rem', textAlign: 'center' }}>
+          Don&apos;t have an account?{' '}
+          <Anchor component={Link} to="/register" className={classes.forgot}>
+            Create your organization
+          </Anchor>
+        </p>
 
         <div className={classes.demo}>
           <p className={classes.demoHint}>

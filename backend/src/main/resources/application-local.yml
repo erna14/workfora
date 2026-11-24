@@ -20,3 +20,6 @@ spring:
 workfora:
   jwt:
     secret: local-dev-only-secret-key-please-change-in-production-32+
+  registration:
+    frontend-base-url: http://localhost:5173
+    expose-verification-token: true

@@ -7,6 +7,7 @@ public record UserMeResponse(
         UUID id,
         String email,
         UUID employeeId,
+        UUID organizationId,
         List<String> roles,
         List<String> permissions
 ) {

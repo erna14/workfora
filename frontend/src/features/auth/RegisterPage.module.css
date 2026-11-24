@@ -1,0 +1,183 @@
+.form {
+  width: 100%;
+}
+
+.header {
+  margin-bottom: 1.35rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.65rem;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.2;
+  color: var(--mantine-color-text);
+}
+
+.subtitle {
+  margin: 0.5rem 0 0;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--mantine-color-dimmed);
+}
+
+.steps {
+  display: flex;
+  gap: 0.45rem;
+  margin: 0 0 1.35rem;
+}
+
+.stepDot {
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mantine-color-brand-6) 14%, var(--workfora-border));
+  transition: background 180ms ease;
+}
+
+.stepDot[data-active='true'] {
+  background: var(--mantine-color-brand-6);
+}
+
+.stepDot[data-done='true'] {
+  background: color-mix(in srgb, var(--mantine-color-brand-6) 55%, transparent);
+}
+
+.stepLabel {
+  margin: 0 0 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mantine-color-dimmed);
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  margin-bottom: 0.4rem;
+  color: var(--mantine-color-text);
+}
+
+.input {
+  min-height: 44px;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.errorSpace {
+  min-height: 1.25rem;
+  margin-top: 0.3rem;
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+  color: var(--mantine-color-red-6);
+}
+
+.field :global(.mantine-TextInput-error),
+.field :global(.mantine-PasswordInput-error),
+.field :global(.mantine-Select-error),
+.field :global(.mantine-Checkbox-error) {
+  display: none;
+}
+
+.input:focus,
+.input:focus-within {
+  border-color: var(--mantine-color-brand-5);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mantine-color-brand-6) 16%, transparent);
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.85rem;
+}
+
+.submit {
+  min-height: 44px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  flex: 1;
+}
+
+.back {
+  min-height: 44px;
+  min-width: 6.5rem;
+}
+
+.footer {
+  margin-top: 1.5rem;
+  padding-top: 1.15rem;
+  border-top: 1px solid var(--workfora-border);
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--mantine-color-dimmed);
+}
+
+.footerLink {
+  font-weight: 600;
+  color: var(--mantine-color-brand-6);
+}
+
+.successCard {
+  text-align: left;
+}
+
+.successTitle {
+  margin: 0;
+  font-size: 1.45rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.successBody {
+  margin: 0.65rem 0 0;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--mantine-color-dimmed);
+}
+
+.devToken {
+  margin-top: 1rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 10px;
+  border: 1px dashed color-mix(in srgb, var(--mantine-color-brand-6) 35%, transparent);
+  background: color-mix(in srgb, var(--mantine-color-brand-6) 6%, transparent);
+  font-size: 0.75rem;
+  word-break: break-all;
+  color: var(--mantine-color-dimmed);
+}
+
+@media (max-width: 560px) {
+  .grid2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+[data-mantine-color-scheme='dark'] .stepDot[data-active='true'] {
+  background: var(--mantine-color-brand-4);
+}
+
+[data-mantine-color-scheme='dark'] .footerLink {
+  color: var(--mantine-color-brand-4);
+}
+
+[data-mantine-color-scheme='dark'] .errorSpace {
+  color: var(--mantine-color-red-4);
+}

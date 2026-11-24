@@ -12,6 +12,7 @@ public class UserPrincipal implements UserDetails {
     private final String password;
     private final boolean enabled;
     private final UUID employeeId;
+    private final UUID organizationId;
     private final Collection<? extends GrantedAuthority> authorities;
 
     public UserPrincipal(
@@ -20,6 +21,7 @@ public class UserPrincipal implements UserDetails {
             String password,
             boolean enabled,
             UUID employeeId,
+            UUID organizationId,
             Collection<? extends GrantedAuthority> authorities
     ) {
         this.id = id;
@@ -27,6 +29,7 @@ public class UserPrincipal implements UserDetails {
         this.password = password;
         this.enabled = enabled;
         this.employeeId = employeeId;
+        this.organizationId = organizationId;
         this.authorities = authorities;
     }
 
@@ -36,6 +39,10 @@ public class UserPrincipal implements UserDetails {
 
     public UUID getEmployeeId() {
         return employeeId;
+    }
+
+    public UUID getOrganizationId() {
+        return organizationId;
     }
 
     @Override

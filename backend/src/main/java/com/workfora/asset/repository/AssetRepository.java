@@ -1,4 +1,5 @@
 package com.workfora.asset.repository;
+
 import com.workfora.asset.domain.Asset;
 import java.util.UUID;
 import org.springframework.data.domain.Page;

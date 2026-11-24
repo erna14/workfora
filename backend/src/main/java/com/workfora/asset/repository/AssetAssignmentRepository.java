@@ -1,4 +1,5 @@
 package com.workfora.asset.repository;
+
 import com.workfora.asset.domain.AssetAssignment;
 import java.util.Optional;
 import java.util.UUID;

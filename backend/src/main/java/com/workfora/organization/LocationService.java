@@ -1,6 +1,6 @@
 package com.workfora.organization;
 
-import com.workfora.common.OrgConstants;
+import com.workfora.security.SecurityUtils;
 import com.workfora.common.exception.ResourceNotFoundException;
 import com.workfora.organization.domain.Location;
 import com.workfora.organization.dto.LocationRequest;
@@ -23,7 +23,7 @@ public class LocationService {
 
     @Transactional(readOnly = true)
     public Page<LocationResponse> list(Pageable pageable) {
-        return locationRepository.findByOrganizationId(OrgConstants.DEFAULT_ORG_ID, pageable).map(OrganizationMapper::toLocation);
+        return locationRepository.findByOrganizationId(SecurityUtils.requireOrganizationId(), pageable).map(OrganizationMapper::toLocation);
     }
 
     @Transactional(readOnly = true)
@@ -34,7 +34,7 @@ public class LocationService {
     @Transactional
     public LocationResponse create(LocationRequest request) {
         Location location = new Location();
-        location.setOrganizationId(OrgConstants.DEFAULT_ORG_ID);
+        location.setOrganizationId(SecurityUtils.requireOrganizationId());
         apply(location, request);
         return OrganizationMapper.toLocation(locationRepository.save(location));
     }

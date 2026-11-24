@@ -1,4 +1,5 @@
 package com.workfora.leave.repository;
+
 import com.workfora.leave.domain.LeaveType;
 import java.util.List;
 import java.util.UUID;

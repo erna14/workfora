@@ -1,6 +1,6 @@
 package com.workfora.recruitment;
 
-import com.workfora.common.OrgConstants;
+import com.workfora.security.SecurityUtils;
 import com.workfora.common.exception.ResourceNotFoundException;
 import com.workfora.recruitment.domain.Applicant;
 import com.workfora.recruitment.domain.Interview;
@@ -41,7 +41,7 @@ public class RecruitmentService {
 
     @Transactional(readOnly = true)
     public Page<JobOpeningResponse> listJobs(Pageable pageable) {
-        return jobOpeningRepository.findByOrganizationId(OrgConstants.DEFAULT_ORG_ID, pageable).map(this::toJob);
+        return jobOpeningRepository.findByOrganizationId(SecurityUtils.requireOrganizationId(), pageable).map(this::toJob);
     }
 
     @Transactional(readOnly = true)
@@ -52,7 +52,7 @@ public class RecruitmentService {
     @Transactional
     public JobOpeningResponse createJob(JobOpeningRequest request) {
         JobOpening job = new JobOpening();
-        job.setOrganizationId(OrgConstants.DEFAULT_ORG_ID);
+        job.setOrganizationId(SecurityUtils.requireOrganizationId());
         apply(job, request);
         JobOpening saved = jobOpeningRepository.save(job);
         createDefaultStages(saved.getId());

@@ -34,6 +34,15 @@ workfora:
     allowed-origins: ${CORS_ORIGINS:http://localhost:5173,http://localhost:8080}
   storage:
     documents-path: ${DOCUMENTS_PATH:./data/documents}
+  registration:
+    frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:5173}
+    verification-token-hours: ${VERIFICATION_TOKEN_HOURS:24}
+    expose-verification-token: ${EXPOSE_VERIFICATION_TOKEN:false}
+  mail:
+    from: ${MAIL_FROM:noreply@workfora.local}
+
+# Optional SMTP: set SPRING_MAIL_HOST / SPRING_MAIL_PORT / SPRING_MAIL_USERNAME /
+# SPRING_MAIL_PASSWORD (or spring.mail.*) to enable SmtpEmailSender instead of logging.
 
 logging:
   level:

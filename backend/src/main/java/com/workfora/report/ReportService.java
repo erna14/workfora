@@ -1,7 +1,7 @@
 package com.workfora.report;
 
+import com.workfora.security.SecurityUtils;
 import com.workfora.asset.repository.AssetRepository;
-import com.workfora.common.OrgConstants;
 import com.workfora.employee.domain.EmployeeStatus;
 import com.workfora.employee.repository.EmployeeRepository;
 import com.workfora.leave.repository.LeaveRequestRepository;
@@ -32,14 +32,14 @@ public class ReportService {
 
     @Transactional(readOnly = true)
     public ReportSummaryResponse summary() {
-        long active = employeeRepository.countByOrganizationIdAndStatus(OrgConstants.DEFAULT_ORG_ID, EmployeeStatus.ACTIVE);
+        long active = employeeRepository.countByOrganizationIdAndStatus(SecurityUtils.requireOrganizationId(), EmployeeStatus.ACTIVE);
         long total = employeeRepository.count();
         return new ReportSummaryResponse(
                 total,
                 active,
                 leaveRequestRepository.countByStatus("PENDING"),
-                jobOpeningRepository.countByOrganizationIdAndStatus(OrgConstants.DEFAULT_ORG_ID, "OPEN"),
-                assetRepository.countByOrganizationIdAndStatus(OrgConstants.DEFAULT_ORG_ID, "AVAILABLE")
+                jobOpeningRepository.countByOrganizationIdAndStatus(SecurityUtils.requireOrganizationId(), "OPEN"),
+                assetRepository.countByOrganizationIdAndStatus(SecurityUtils.requireOrganizationId(), "AVAILABLE")
         );
     }
 }

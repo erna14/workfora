@@ -1,4 +1,5 @@
 package com.workfora.recruitment.repository;
+
 import com.workfora.recruitment.domain.RecruitmentStage;
 import java.util.List;
 import java.util.UUID;

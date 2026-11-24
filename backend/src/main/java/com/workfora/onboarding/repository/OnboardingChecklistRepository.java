@@ -1,4 +1,5 @@
 package com.workfora.onboarding.repository;
+
 import com.workfora.onboarding.domain.OnboardingChecklist;
 import java.util.UUID;
 import org.springframework.data.domain.Page;

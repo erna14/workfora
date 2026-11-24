@@ -1,6 +1,6 @@
 package com.workfora.payroll;
 
-import com.workfora.common.OrgConstants;
+import com.workfora.security.SecurityUtils;
 import com.workfora.common.exception.ResourceNotFoundException;
 import com.workfora.payroll.domain.*;
 import com.workfora.payroll.dto.PayrollDtos.*;
@@ -43,13 +43,13 @@ public class PayrollService {
 
     @Transactional(readOnly = true)
     public Page<StructureResponse> listStructures(Pageable pageable) {
-        return structureRepository.findByOrganizationId(OrgConstants.DEFAULT_ORG_ID, pageable).map(this::toStructure);
+        return structureRepository.findByOrganizationId(SecurityUtils.requireOrganizationId(), pageable).map(this::toStructure);
     }
 
     @Transactional
     public StructureResponse createStructure(StructureRequest request) {
         SalaryStructure structure = new SalaryStructure();
-        structure.setOrganizationId(OrgConstants.DEFAULT_ORG_ID);
+        structure.setOrganizationId(SecurityUtils.requireOrganizationId());
         structure.setName(request.name());
         structure.setCurrency(request.currency() != null ? request.currency() : "USD");
         structure.setDescription(request.description());
@@ -85,14 +85,14 @@ public class PayrollService {
 
     @Transactional(readOnly = true)
     public Page<PeriodResponse> listPeriods(Pageable pageable) {
-        return periodRepository.findByOrganizationId(OrgConstants.DEFAULT_ORG_ID, pageable)
+        return periodRepository.findByOrganizationId(SecurityUtils.requireOrganizationId(), pageable)
                 .map(p -> new PeriodResponse(p.getId(), p.getName(), p.getStartDate(), p.getEndDate(), p.getStatus(), p.getProcessedAt()));
     }
 
     @Transactional
     public PeriodResponse createPeriod(PeriodRequest request) {
         PayrollPeriod period = new PayrollPeriod();
-        period.setOrganizationId(OrgConstants.DEFAULT_ORG_ID);
+        period.setOrganizationId(SecurityUtils.requireOrganizationId());
         period.setName(request.name());
         period.setStartDate(request.startDate());
         period.setEndDate(request.endDate());

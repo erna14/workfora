@@ -1,6 +1,6 @@
 package com.workfora.onboarding;
 
-import com.workfora.common.OrgConstants;
+import com.workfora.security.SecurityUtils;
 import com.workfora.common.exception.BusinessException;
 import com.workfora.common.exception.ResourceNotFoundException;
 import com.workfora.onboarding.domain.OnboardingChecklist;
@@ -43,13 +43,13 @@ public class OnboardingService {
 
     @Transactional(readOnly = true)
     public Page<TemplateResponse> listTemplates(Pageable pageable) {
-        return templateRepository.findByOrganizationId(OrgConstants.DEFAULT_ORG_ID, pageable).map(this::toTemplate);
+        return templateRepository.findByOrganizationId(SecurityUtils.requireOrganizationId(), pageable).map(this::toTemplate);
     }
 
     @Transactional
     public TemplateResponse createTemplate(TemplateRequest request) {
         OnboardingTemplate template = new OnboardingTemplate();
-        template.setOrganizationId(OrgConstants.DEFAULT_ORG_ID);
+        template.setOrganizationId(SecurityUtils.requireOrganizationId());
         template.setName(request.name());
         template.setDescription(request.description());
         template.setActive(request.active() == null || request.active());

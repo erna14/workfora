@@ -22,8 +22,11 @@ import java.util.HexFormat;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
@@ -54,11 +57,32 @@ public class AuthService {
 
     @Transactional
     public AuthResult login(LoginRequest request) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.email(), request.password())
-        );
+        Authentication authentication;
+        try {
+            authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.email(), request.password())
+            );
+        } catch (DisabledException ex) {
+            throw new BusinessException(
+                    "Please verify your email before signing in",
+                    HttpStatus.FORBIDDEN
+            );
+        } catch (AuthenticationException ex) {
+            throw new BadCredentialsException("Invalid email or password");
+        }
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
-        return issueTokens(principal);
+        UserAccount user = userAccountRepository.findById(principal.getId())
+                .orElseThrow(() -> new BusinessException("Invalid email or password", HttpStatus.UNAUTHORIZED));
+        if (!user.isEmailVerified()) {
+            throw new BusinessException(
+                    "Please verify your email before signing in",
+                    HttpStatus.FORBIDDEN
+            );
+        }
+        if (!user.isEnabled()) {
+            throw new BusinessException("This account is disabled", HttpStatus.FORBIDDEN);
+        }
+        return issueTokens(toPrincipal(user));
     }
 
     @Transactional
@@ -75,6 +99,9 @@ public class AuthService {
         }
         existing.setRevoked(true);
         UserAccount user = existing.getUser();
+        if (!user.isEnabled() || !user.isEmailVerified()) {
+            throw new BusinessException("Account is not active", HttpStatus.UNAUTHORIZED);
+        }
         UserPrincipal principal = toPrincipal(user);
         return issueTokens(principal);
     }
@@ -116,7 +143,7 @@ public class AuthService {
         return new AuthResult(response, rawRefresh, jwtService.getRefreshTokenExpiresInSeconds());
     }
 
-    private UserPrincipal toPrincipal(UserAccount user) {
+    public static UserPrincipal toPrincipal(UserAccount user) {
         List<GrantedAuthority> authorities = new ArrayList<>();
         for (Role role : user.getRoles()) {
             authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getCode()));
@@ -130,6 +157,7 @@ public class AuthService {
                 user.getPasswordHash(),
                 user.isEnabled(),
                 user.getEmployeeId(),
+                user.getOrganizationId(),
                 authorities
         );
     }
@@ -142,7 +170,14 @@ public class AuthService {
                 .distinct()
                 .sorted()
                 .toList();
-        return new UserMeResponse(user.getId(), user.getEmail(), user.getEmployeeId(), roles, permissions);
+        return new UserMeResponse(
+                user.getId(),
+                user.getEmail(),
+                user.getEmployeeId(),
+                user.getOrganizationId(),
+                roles,
+                permissions
+        );
     }
 
     private String generateRawToken() {

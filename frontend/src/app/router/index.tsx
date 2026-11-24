@@ -6,6 +6,8 @@ import { AuthLayout } from '../layouts/AuthLayout'
 import { ProtectedRoute } from './ProtectedRoute'
 
 const LoginPage = lazy(() => import('../../features/auth/LoginPage'))
+const RegisterPage = lazy(() => import('../../features/auth/RegisterPage'))
+const VerifyEmailPage = lazy(() => import('../../features/auth/VerifyEmailPage'))
 const DashboardPage = lazy(() => import('../../features/dashboard/DashboardPage'))
 const EmployeesPage = lazy(() => import('../../features/employees/EmployeesPage'))
 const EmployeeProfilePage = lazy(() => import('../../features/employees/EmployeeProfilePage'))
@@ -40,14 +42,29 @@ function Lazy({ children }: { children: ReactNode }) {
 
 export const router = createBrowserRouter([
   {
-    path: '/login',
     element: <AuthLayout />,
     children: [
       {
-        index: true,
+        path: '/login',
         element: (
           <Lazy>
             <LoginPage />
+          </Lazy>
+        ),
+      },
+      {
+        path: '/register',
+        element: (
+          <Lazy>
+            <RegisterPage />
+          </Lazy>
+        ),
+      },
+      {
+        path: '/verify-email',
+        element: (
+          <Lazy>
+            <VerifyEmailPage />
           </Lazy>
         ),
       },

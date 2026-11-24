@@ -9,6 +9,8 @@ public class WorkforaProperties {
     private final Jwt jwt = new Jwt();
     private final Cors cors = new Cors();
     private final Storage storage = new Storage();
+    private final Registration registration = new Registration();
+    private final Mail mail = new Mail();
 
     public Jwt getJwt() {
         return jwt;
@@ -20,6 +22,14 @@ public class WorkforaProperties {
 
     public Storage getStorage() {
         return storage;
+    }
+
+    public Registration getRegistration() {
+        return registration;
+    }
+
+    public Mail getMail() {
+        return mail;
     }
 
     public static class Jwt {
@@ -73,6 +83,48 @@ public class WorkforaProperties {
 
         public void setDocumentsPath(String documentsPath) {
             this.documentsPath = documentsPath;
+        }
+    }
+
+    public static class Registration {
+        private String frontendBaseUrl = "http://localhost:5173";
+        private int verificationTokenHours = 24;
+        private boolean exposeVerificationToken = false;
+
+        public String getFrontendBaseUrl() {
+            return frontendBaseUrl;
+        }
+
+        public void setFrontendBaseUrl(String frontendBaseUrl) {
+            this.frontendBaseUrl = frontendBaseUrl;
+        }
+
+        public int getVerificationTokenHours() {
+            return verificationTokenHours;
+        }
+
+        public void setVerificationTokenHours(int verificationTokenHours) {
+            this.verificationTokenHours = verificationTokenHours;
+        }
+
+        public boolean isExposeVerificationToken() {
+            return exposeVerificationToken;
+        }
+
+        public void setExposeVerificationToken(boolean exposeVerificationToken) {
+            this.exposeVerificationToken = exposeVerificationToken;
+        }
+    }
+
+    public static class Mail {
+        private String from = "noreply@workfora.local";
+
+        public String getFrom() {
+            return from;
+        }
+
+        public void setFrom(String from) {
+            this.from = from;
         }
     }
 }

@@ -1,4 +1,5 @@
 package com.workfora.recruitment.repository;
+
 import com.workfora.recruitment.domain.Applicant;
 import java.util.UUID;
 import org.springframework.data.domain.Page;

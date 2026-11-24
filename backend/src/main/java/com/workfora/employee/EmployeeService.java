@@ -1,7 +1,7 @@
 package com.workfora.employee;
 
+import com.workfora.security.SecurityUtils;
 import com.workfora.audit.AuditService;
-import com.workfora.common.OrgConstants;
 import com.workfora.common.exception.BusinessException;
 import com.workfora.common.exception.ResourceNotFoundException;
 import com.workfora.employee.domain.Employee;
@@ -46,7 +46,7 @@ public class EmployeeService {
 
     @Transactional(readOnly = true)
     public Page<EmployeeListItemResponse> list(String search, EmployeeStatus status, UUID departmentId, Pageable pageable) {
-        return employeeRepository.search(OrgConstants.DEFAULT_ORG_ID, search, status, departmentId, pageable)
+        return employeeRepository.search(SecurityUtils.requireOrganizationId(), search, status, departmentId, pageable)
                 .map(EmployeeMapper::toListItem);
     }
 
@@ -66,11 +66,11 @@ public class EmployeeService {
         if (employeeRepository.existsByWorkEmailIgnoreCase(request.workEmail())) {
             throw new BusinessException("Work email already exists");
         }
-        if (employeeRepository.existsByOrganizationIdAndEmployeeNumber(OrgConstants.DEFAULT_ORG_ID, request.employeeNumber())) {
+        if (employeeRepository.existsByOrganizationIdAndEmployeeNumber(SecurityUtils.requireOrganizationId(), request.employeeNumber())) {
             throw new BusinessException("Employee number already exists");
         }
         Employee employee = new Employee();
-        employee.setOrganizationId(OrgConstants.DEFAULT_ORG_ID);
+        employee.setOrganizationId(SecurityUtils.requireOrganizationId());
         employee.setEmployeeNumber(request.employeeNumber());
         employee.setFirstName(request.firstName());
         employee.setLastName(request.lastName());

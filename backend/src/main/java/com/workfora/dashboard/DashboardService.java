@@ -3,7 +3,6 @@ package com.workfora.dashboard;
 import com.workfora.audit.domain.AuditLog;
 import com.workfora.audit.repository.AuditLogRepository;
 import com.workfora.attendance.repository.AttendanceRecordRepository;
-import com.workfora.common.OrgConstants;
 import com.workfora.dashboard.dto.DashboardSummaryResponse;
 import com.workfora.dashboard.dto.DashboardSummaryResponse.ActivityItem;
 import com.workfora.dashboard.dto.DashboardSummaryResponse.Anniversary;
@@ -54,7 +53,7 @@ public class DashboardService {
 
     @Transactional(readOnly = true)
     public DashboardSummaryResponse summary() {
-        var orgId = OrgConstants.DEFAULT_ORG_ID;
+        var orgId = SecurityUtils.requireOrganizationId();
         LocalDate today = LocalDate.now();
         LocalDate hireCutoff = today.minusDays(30);
 

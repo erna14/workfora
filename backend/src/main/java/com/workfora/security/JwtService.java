@@ -30,6 +30,7 @@ public class JwtService {
                 .subject(principal.getUsername())
                 .claim("uid", principal.getId().toString())
                 .claim("eid", principal.getEmployeeId() != null ? principal.getEmployeeId().toString() : null)
+                .claim("oid", principal.getOrganizationId() != null ? principal.getOrganizationId().toString() : null)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiry))
                 .signWith(key)

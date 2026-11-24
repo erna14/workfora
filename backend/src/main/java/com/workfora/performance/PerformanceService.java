@@ -1,6 +1,6 @@
 package com.workfora.performance;
 
-import com.workfora.common.OrgConstants;
+import com.workfora.security.SecurityUtils;
 import com.workfora.common.exception.ResourceNotFoundException;
 import com.workfora.performance.domain.Goal;
 import com.workfora.performance.domain.PerformanceCycle;
@@ -36,14 +36,14 @@ public class PerformanceService {
 
     @Transactional(readOnly = true)
     public Page<CycleResponse> listCycles(Pageable pageable) {
-        return cycleRepository.findByOrganizationId(OrgConstants.DEFAULT_ORG_ID, pageable)
+        return cycleRepository.findByOrganizationId(SecurityUtils.requireOrganizationId(), pageable)
                 .map(c -> new CycleResponse(c.getId(), c.getName(), c.getStartDate(), c.getEndDate(), c.getStatus()));
     }
 
     @Transactional
     public CycleResponse createCycle(CycleRequest request) {
         PerformanceCycle cycle = new PerformanceCycle();
-        cycle.setOrganizationId(OrgConstants.DEFAULT_ORG_ID);
+        cycle.setOrganizationId(SecurityUtils.requireOrganizationId());
         cycle.setName(request.name());
         cycle.setStartDate(request.startDate());
         cycle.setEndDate(request.endDate());

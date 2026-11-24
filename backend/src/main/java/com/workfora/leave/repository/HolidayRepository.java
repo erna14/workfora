@@ -1,4 +1,5 @@
 package com.workfora.leave.repository;
+
 import com.workfora.leave.domain.Holiday;
 import java.util.UUID;
 import org.springframework.data.domain.Page;

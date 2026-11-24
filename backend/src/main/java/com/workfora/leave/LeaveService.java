@@ -1,6 +1,5 @@
 package com.workfora.leave;
 
-import com.workfora.common.OrgConstants;
 import com.workfora.common.exception.BusinessException;
 import com.workfora.common.exception.ResourceNotFoundException;
 import com.workfora.leave.domain.Holiday;
@@ -46,7 +45,7 @@ public class LeaveService {
 
     @Transactional(readOnly = true)
     public List<LeaveTypeResponse> listTypes() {
-        return leaveTypeRepository.findByOrganizationId(OrgConstants.DEFAULT_ORG_ID).stream()
+        return leaveTypeRepository.findByOrganizationId(SecurityUtils.requireOrganizationId()).stream()
                 .map(t -> new LeaveTypeResponse(t.getId(), t.getCode(), t.getName(), t.isPaid(), t.getMaxDaysPerYear(), t.getDescription()))
                 .toList();
     }
@@ -139,14 +138,14 @@ public class LeaveService {
 
     @Transactional(readOnly = true)
     public Page<HolidayResponse> listHolidays(Pageable pageable) {
-        return holidayRepository.findByOrganizationId(OrgConstants.DEFAULT_ORG_ID, pageable)
+        return holidayRepository.findByOrganizationId(SecurityUtils.requireOrganizationId(), pageable)
                 .map(h -> new HolidayResponse(h.getId(), h.getName(), h.getHolidayDate()));
     }
 
     @Transactional
     public HolidayResponse createHoliday(HolidayRequest request) {
         Holiday holiday = new Holiday();
-        holiday.setOrganizationId(OrgConstants.DEFAULT_ORG_ID);
+        holiday.setOrganizationId(SecurityUtils.requireOrganizationId());
         holiday.setName(request.name());
         holiday.setHolidayDate(request.holidayDate());
         Holiday saved = holidayRepository.save(holiday);

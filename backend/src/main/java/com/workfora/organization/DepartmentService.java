@@ -1,6 +1,6 @@
 package com.workfora.organization;
 
-import com.workfora.common.OrgConstants;
+import com.workfora.security.SecurityUtils;
 import com.workfora.common.exception.BusinessException;
 import com.workfora.common.exception.ResourceNotFoundException;
 import com.workfora.organization.domain.Department;
@@ -24,7 +24,7 @@ public class DepartmentService {
 
     @Transactional(readOnly = true)
     public Page<DepartmentResponse> list(Pageable pageable) {
-        return departmentRepository.findByOrganizationId(OrgConstants.DEFAULT_ORG_ID, pageable).map(OrganizationMapper::toDepartment);
+        return departmentRepository.findByOrganizationId(SecurityUtils.requireOrganizationId(), pageable).map(OrganizationMapper::toDepartment);
     }
 
     @Transactional(readOnly = true)
@@ -34,11 +34,11 @@ public class DepartmentService {
 
     @Transactional
     public DepartmentResponse create(DepartmentRequest request) {
-        if (departmentRepository.existsByOrganizationIdAndCodeIgnoreCase(OrgConstants.DEFAULT_ORG_ID, request.code())) {
+        if (departmentRepository.existsByOrganizationIdAndCodeIgnoreCase(SecurityUtils.requireOrganizationId(), request.code())) {
             throw new BusinessException("Department code already exists");
         }
         Department department = new Department();
-        department.setOrganizationId(OrgConstants.DEFAULT_ORG_ID);
+        department.setOrganizationId(SecurityUtils.requireOrganizationId());
         apply(department, request);
         return OrganizationMapper.toDepartment(departmentRepository.save(department));
     }
