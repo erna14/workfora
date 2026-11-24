@@ -17,6 +17,7 @@ import com.workfora.identity.repository.UserAccountRepository;
 import com.workfora.organization.domain.Department;
 import com.workfora.organization.domain.Location;
 import com.workfora.organization.domain.MembershipStatus;
+import com.workfora.organization.domain.OrgUnitStatus;
 import com.workfora.organization.domain.Organization;
 import com.workfora.organization.domain.OrganizationMembership;
 import com.workfora.organization.repository.DepartmentRepository;
@@ -209,14 +210,20 @@ public class OrganizationRegistrationService {
         List<String> departments = setup.departments();
         if (departments != null) {
             int index = 1;
+            Set<String> seenNames = new HashSet<>();
             for (String name : departments) {
                 if (name == null || name.isBlank()) {
                     continue;
                 }
+                String trimmed = name.trim();
+                if (!seenNames.add(trimmed.toLowerCase(Locale.ROOT))) {
+                    continue;
+                }
                 Department department = new Department();
                 department.setOrganizationId(organization.getId());
-                department.setName(name.trim());
+                department.setName(trimmed);
                 department.setCode("DEPT-" + String.format("%02d", index++));
+                department.setStatus(OrgUnitStatus.ACTIVE);
                 departmentRepository.save(department);
             }
         }

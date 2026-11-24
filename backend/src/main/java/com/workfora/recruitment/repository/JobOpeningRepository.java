@@ -8,4 +8,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface JobOpeningRepository extends JpaRepository<JobOpening, UUID> {
     Page<JobOpening> findByOrganizationId(UUID organizationId, Pageable pageable);
     long countByOrganizationIdAndStatus(UUID organizationId, String status);
+    boolean existsByDepartmentId(UUID departmentId);
 }

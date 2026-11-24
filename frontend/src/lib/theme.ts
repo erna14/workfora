@@ -98,5 +98,11 @@ export const theme: MantineThemeOverride = createTheme({
         underline: 'hover',
       },
     },
+    Drawer: {
+      defaultProps: {
+        position: 'right',
+        size: 440,
+      },
+    },
   },
 })

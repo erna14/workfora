@@ -3,6 +3,7 @@ package com.workfora.employee.repository;
 import com.workfora.employee.domain.Employee;
 import com.workfora.employee.domain.EmployeeStatus;
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -23,6 +24,33 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
     boolean existsByWorkEmailIgnoreCase(String workEmail);
 
     boolean existsByOrganizationIdAndEmployeeNumber(UUID organizationId, String employeeNumber);
+
+    boolean existsByDepartmentId(UUID departmentId);
+
+    boolean existsByPositionId(UUID positionId);
+
+    @Query("""
+            SELECT e.departmentId, COUNT(e.id)
+            FROM Employee e
+            WHERE e.departmentId IN :ids
+            GROUP BY e.departmentId
+            """)
+    List<Object[]> countGroupedByDepartmentId(@Param("ids") Collection<UUID> ids);
+
+    @Query("""
+            SELECT e.positionId, COUNT(e.id)
+            FROM Employee e
+            WHERE e.positionId IN :ids
+            GROUP BY e.positionId
+            """)
+    List<Object[]> countGroupedByPositionId(@Param("ids") Collection<UUID> ids);
+
+    @Query("""
+            SELECT e.id, e.firstName, e.lastName
+            FROM Employee e
+            WHERE e.id IN :ids
+            """)
+    List<Object[]> findNamesByIdIn(@Param("ids") Collection<UUID> ids);
 
     long countByOrganizationIdAndStatus(UUID organizationId, EmployeeStatus status);
 

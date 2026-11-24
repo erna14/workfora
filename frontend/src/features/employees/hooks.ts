@@ -1,5 +1,6 @@
 import { notifications } from '@mantine/notifications'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useAuth } from '../../app/providers/AuthProvider'
 import {
   activateEmployee,
   createEmployee,
@@ -21,9 +22,11 @@ export const employeeKeys = {
 }
 
 export function useEmployeesQuery(params: EmployeeListParams) {
+  const organizationId = useAuth().user?.organizationId ?? null
   return useQuery({
-    queryKey: employeeKeys.list(params),
+    queryKey: [...employeeKeys.list(params), organizationId],
     queryFn: () => fetchEmployees(params),
+    enabled: Boolean(organizationId),
   })
 }
 
@@ -41,6 +44,8 @@ export function useCreateEmployeeMutation() {
     mutationFn: (payload: EmployeeCreateRequest) => createEmployee(payload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: employeeKeys.lists() })
+      void queryClient.invalidateQueries({ queryKey: ['departments'] })
+      void queryClient.invalidateQueries({ queryKey: ['positions'] })
       notifications.show({ color: 'green', message: 'Employee created' })
     },
     onError: (error) => {
@@ -55,6 +60,8 @@ export function useUpdateEmployeeMutation(id: string) {
     mutationFn: (payload: EmployeeUpdateRequest) => updateEmployee(id, payload),
     onSuccess: (data) => {
       void queryClient.invalidateQueries({ queryKey: employeeKeys.lists() })
+      void queryClient.invalidateQueries({ queryKey: ['departments'] })
+      void queryClient.invalidateQueries({ queryKey: ['positions'] })
       queryClient.setQueryData(employeeKeys.detail(id), data)
       notifications.show({ color: 'green', message: 'Employee updated' })
     },

@@ -1,7 +1,10 @@
 import { Button, Group, Select, SimpleGrid, Stack, TextInput } from '@mantine/core'
-import { useForm } from '@tanstack/react-form'
+import { useForm, useStore } from '@tanstack/react-form'
+import { useEffect } from 'react'
+import { useAuth } from '../../app/providers/AuthProvider'
 import { EMPLOYEE_STATUSES, type EmployeeDetail } from '../../types/employee'
 import { useDepartmentsQuery, useLocationsQuery, usePositionsQuery, useTeamsQuery } from '../organization/hooks'
+import { activeDepartmentOptions, activePositionOptions, resolveDepartmentSelection } from '../organization/structure'
 import { employeeFormSchema, type EmployeeFormValues } from './schemas'
 
 interface EmployeeFormProps {
@@ -49,8 +52,8 @@ export function EmployeeForm({
   onSubmit,
   onCancel,
 }: EmployeeFormProps) {
-  const departments = useDepartmentsQuery()
-  const positions = usePositionsQuery()
+  const organizationId = useAuth().user?.organizationId ?? null
+  const departments = useDepartmentsQuery({ activeOnly: true })
   const teams = useTeamsQuery()
   const locations = useLocationsQuery()
 
@@ -64,10 +67,61 @@ export function EmployeeForm({
     },
   })
 
-  const departmentOptions =
-    departments.data?.data.map((d) => ({ value: d.id, label: d.name })) ?? []
-  const positionOptions =
-    positions.data?.data.map((p) => ({ value: p.id, label: p.title })) ?? []
+  const departmentId = useStore(form.store, (state) => state.values.departmentId) ?? ''
+  const positionId = useStore(form.store, (state) => state.values.positionId) ?? ''
+  const departmentOptions = departments.isSuccess
+    ? activeDepartmentOptions(departments.data?.data ?? [], organizationId)
+    : null
+  const positions = usePositionsQuery({
+    activeOnly: true,
+    departmentId: departmentId || undefined,
+  })
+  const positionOptions = positions.isSuccess
+    ? activePositionOptions(positions.data?.data ?? [], organizationId, departmentId || null)
+    : null
+
+  useEffect(() => {
+    const keepDepartment = Boolean(employee?.departmentId) && employee?.departmentId === departmentId
+    const nextDepartment = keepDepartment
+      ? departmentId
+      : resolveDepartmentSelection(departmentId, departmentOptions)
+    if (nextDepartment !== departmentId) {
+      form.setFieldValue('departmentId', nextDepartment)
+    }
+    const keepPosition =
+      Boolean(employee?.positionId) &&
+      employee?.positionId === positionId &&
+      (employee?.departmentId ?? '') === departmentId
+    const nextPosition = keepPosition
+      ? positionId
+      : resolveDepartmentSelection(positionId, positionOptions)
+    if (nextPosition !== positionId) {
+      form.setFieldValue('positionId', nextPosition)
+    }
+  }, [departmentId, departmentOptions, employee, positionId, positionOptions, form])
+
+  const departmentSelectOptions = [...(departmentOptions ?? [])]
+  if (
+    employee?.departmentId &&
+    employee.departmentId === departmentId &&
+    !departmentSelectOptions.some((option) => option.value === employee.departmentId)
+  ) {
+    departmentSelectOptions.unshift({
+      value: employee.departmentId,
+      label: employee.departmentName ?? 'Current department',
+    })
+  }
+  const positionSelectOptions = [...(positionOptions ?? [])]
+  if (
+    employee?.positionId &&
+    employee.positionId === positionId &&
+    !positionSelectOptions.some((option) => option.value === employee.positionId)
+  ) {
+    positionSelectOptions.unshift({
+      value: employee.positionId,
+      label: employee.positionTitle ?? 'Current position',
+    })
+  }
   const teamOptions = teams.data?.data.map((t) => ({ value: t.id, label: t.name })) ?? []
   const locationOptions =
     locations.data?.data.map((l) => ({ value: l.id, label: l.name })) ?? []
@@ -199,7 +253,7 @@ export function EmployeeForm({
               <Select
                 label="Department"
                 clearable
-                data={departmentOptions}
+                data={departmentSelectOptions}
                 value={field.state.value || null}
                 onChange={(value) => field.handleChange(value ?? '')}
               />
@@ -210,7 +264,7 @@ export function EmployeeForm({
               <Select
                 label="Position"
                 clearable
-                data={positionOptions}
+                data={positionSelectOptions}
                 value={field.state.value || null}
                 onChange={(value) => field.handleChange(value ?? '')}
               />

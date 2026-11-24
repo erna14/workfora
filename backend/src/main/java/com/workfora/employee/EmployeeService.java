@@ -6,6 +6,11 @@ import com.workfora.common.exception.BusinessException;
 import com.workfora.common.exception.ResourceNotFoundException;
 import com.workfora.employee.domain.Employee;
 import com.workfora.employee.domain.EmployeeStatus;
+import com.workfora.organization.domain.Department;
+import com.workfora.organization.domain.OrgUnitStatus;
+import com.workfora.organization.domain.Position;
+import com.workfora.organization.repository.DepartmentRepository;
+import com.workfora.organization.repository.PositionRepository;
 import com.workfora.employee.dto.EmployeeCreateRequest;
 import com.workfora.employee.dto.EmployeeDetailResponse;
 import com.workfora.employee.dto.EmployeeListItemResponse;
@@ -29,19 +34,25 @@ public class EmployeeService {
     private final EmploymentHistoryRepository employmentHistoryRepository;
     private final EmployeeDocumentRepository employeeDocumentRepository;
     private final AuditService auditService;
+    private final DepartmentRepository departmentRepository;
+    private final PositionRepository positionRepository;
 
     public EmployeeService(
             EmployeeRepository employeeRepository,
             EmergencyContactRepository emergencyContactRepository,
             EmploymentHistoryRepository employmentHistoryRepository,
             EmployeeDocumentRepository employeeDocumentRepository,
-            AuditService auditService
+            AuditService auditService,
+            DepartmentRepository departmentRepository,
+            PositionRepository positionRepository
     ) {
         this.employeeRepository = employeeRepository;
         this.emergencyContactRepository = emergencyContactRepository;
         this.employmentHistoryRepository = employmentHistoryRepository;
         this.employeeDocumentRepository = employeeDocumentRepository;
         this.auditService = auditService;
+        this.departmentRepository = departmentRepository;
+        this.positionRepository = positionRepository;
     }
 
     @Transactional(readOnly = true)
@@ -80,6 +91,7 @@ public class EmployeeService {
         employee.setStatus(request.status() != null ? request.status() : EmployeeStatus.ACTIVE);
         employee.setHireDate(request.hireDate());
         employee.setDateOfBirth(request.dateOfBirth());
+        ensureAssignment(employee.getOrganizationId(), request.departmentId(), request.positionId(), true, true);
         employee.setDepartmentId(request.departmentId());
         employee.setPositionId(request.positionId());
         employee.setTeamId(request.teamId());
@@ -94,6 +106,13 @@ public class EmployeeService {
     @Transactional
     public EmployeeDetailResponse update(UUID id, EmployeeUpdateRequest request) {
         Employee employee = find(id);
+        UUID nextDepartment = request.departmentId() != null ? request.departmentId() : employee.getDepartmentId();
+        UUID nextPosition = request.positionId() != null ? request.positionId() : employee.getPositionId();
+        boolean departmentChanged = request.departmentId() != null && !request.departmentId().equals(employee.getDepartmentId());
+        boolean positionChanged = request.positionId() != null && !request.positionId().equals(employee.getPositionId());
+        if (departmentChanged || positionChanged) {
+            ensureAssignment(employee.getOrganizationId(), nextDepartment, nextPosition, departmentChanged, positionChanged);
+        }
         if (request.firstName() != null) employee.setFirstName(request.firstName());
         if (request.lastName() != null) employee.setLastName(request.lastName());
         if (request.personalEmail() != null) employee.setPersonalEmail(request.personalEmail());
@@ -129,6 +148,35 @@ public class EmployeeService {
         employeeRepository.save(employee);
         auditService.log("EMPLOYEE_ACTIVATED", "Employee", id, null);
         return get(id);
+    }
+
+    private void ensureAssignment(
+            UUID organizationId,
+            UUID departmentId,
+            UUID positionId,
+            boolean departmentMustBeActive,
+            boolean positionMustBeActive
+    ) {
+        if (positionId != null && departmentId == null) {
+            throw new BusinessException("Select a department before assigning a position");
+        }
+        if (departmentId != null && departmentMustBeActive) {
+            Department department = departmentRepository.findByIdAndOrganizationId(departmentId, organizationId)
+                    .orElseThrow(() -> new BusinessException("Department does not belong to this organization"));
+            if (department.getStatus() != OrgUnitStatus.ACTIVE) {
+                throw new BusinessException("Inactive departments cannot be assigned to employees");
+            }
+        }
+        if (positionId != null) {
+            Position position = positionRepository.findByIdAndOrganizationId(positionId, organizationId)
+                    .orElseThrow(() -> new BusinessException("Position does not belong to this organization"));
+            if (departmentId != null && !departmentId.equals(position.getDepartmentId())) {
+                throw new BusinessException("Position does not belong to the selected department");
+            }
+            if (positionMustBeActive && position.getStatus() != OrgUnitStatus.ACTIVE) {
+                throw new BusinessException("Inactive positions cannot be assigned to employees");
+            }
+        }
     }
 
     private Employee find(UUID id) {

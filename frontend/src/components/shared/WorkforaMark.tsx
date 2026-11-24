@@ -1,3 +1,5 @@
+import { useId } from 'react'
+
 interface WorkforaMarkProps {
   size?: number
   className?: string
@@ -5,6 +7,8 @@ interface WorkforaMarkProps {
 
 /** Compact brand mark used on auth and shell surfaces. */
 export function WorkforaMark({ size = 28, className }: WorkforaMarkProps) {
+  const maskId = `workfora-mark-${useId().replace(/:/g, '')}`
+
   return (
     <svg
       width={size}
@@ -15,11 +19,17 @@ export function WorkforaMark({ size = 28, className }: WorkforaMarkProps) {
       className={className}
       aria-hidden
     >
-      <rect width="32" height="32" rx="8" fill="currentColor" opacity="0.12" />
-      <path
-        d="M8 22V10h2.4l3.2 7.6L17 10H19.4v12H17.1V14.2L14 21.2h-1.6L9.3 14.2V22H8Zm14.2 0-3.4-12h2.5l2.1 8.2 2.1-8.2h2.4L22.5 22h-2.3Z"
-        fill="currentColor"
-      />
+      <mask id={maskId}>
+        <rect width="32" height="32" rx="9" fill="white" />
+        <path
+          d="M8.25 9.6 12.2 22.6 16 15.15 19.8 22.6 23.75 9.6"
+          stroke="black"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </mask>
+      <rect width="32" height="32" rx="9" fill="currentColor" mask={`url(#${maskId})`} />
     </svg>
   )
 }

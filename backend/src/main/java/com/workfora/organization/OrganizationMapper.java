@@ -17,15 +17,46 @@ public final class OrganizationMapper {
         return new LocationResponse(e.getId(), e.getOrganizationId(), e.getName(), e.getAddressLine1(), e.getCity(), e.getCountry(), e.getTimezone());
     }
 
-    public static DepartmentResponse toDepartment(Department e) {
-        return new DepartmentResponse(e.getId(), e.getOrganizationId(), e.getParentId(), e.getCode(), e.getName(), e.getDescription());
+    public static DepartmentResponse toDepartment(
+            Department e,
+            String managerName,
+            long employeeCount,
+            long positionCount
+    ) {
+        return new DepartmentResponse(
+                e.getId(),
+                e.getOrganizationId(),
+                e.getParentId(),
+                e.getCode(),
+                e.getName(),
+                e.getDescription(),
+                e.getManagerEmployeeId(),
+                managerName,
+                e.getStatus(),
+                employeeCount,
+                positionCount,
+                e.getCreatedAt(),
+                e.getUpdatedAt()
+        );
     }
 
     public static TeamResponse toTeam(Team e) {
         return new TeamResponse(e.getId(), e.getDepartmentId(), e.getName(), e.getDescription());
     }
 
-    public static PositionResponse toPosition(Position e) {
-        return new PositionResponse(e.getId(), e.getDepartmentId(), e.getTitle(), e.getLevel(), e.getDescription());
+    public static PositionResponse toPosition(Position e, String departmentName, long employeeCount) {
+        return new PositionResponse(
+                e.getId(),
+                e.getOrganizationId(),
+                e.getDepartmentId(),
+                departmentName,
+                e.getTitle(),
+                e.getLevel(),
+                e.getDescription(),
+                e.getStatus(),
+                employeeCount,
+                e.getCreatedAt(),
+                e.getUpdatedAt()
+        );
     }
 }
