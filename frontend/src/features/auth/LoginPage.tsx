@@ -1,27 +1,85 @@
-import { Alert, Button, PasswordInput, Stack, Text, TextInput, UnstyledButton } from '@mantine/core'
+import { Anchor, Button, Checkbox, PasswordInput, TextInput, UnstyledButton } from '@mantine/core'
+import { notifications } from '@mantine/notifications'
 import { useForm } from '@tanstack/react-form'
-import { useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router'
 import { useAuth } from '../../app/providers/AuthProvider'
-import { errorMessage } from '../../utils/format'
+import { ApiError } from '../../types/api'
 import { loginSchema } from './schemas'
 import classes from './LoginPage.module.css'
 
+const REMEMBER_KEY = 'workfora.login.rememberEmail'
+
+const DEMO_ACCOUNTS = [
+  { email: 'admin@workfora.com', label: 'Admin' },
+  { email: 'manager@workfora.com', label: 'Manager' },
+  { email: 'employee@workfora.com', label: 'Employee' },
+] as const
+
 function formatFieldError(errors: unknown[]): string | undefined {
-  const first = errors[0]
-  if (!first) return undefined
-  if (typeof first === 'string') return first
-  if (typeof first === 'object' && first && 'message' in first) {
-    return String((first as { message: unknown }).message)
+  for (const error of errors) {
+    if (!error) continue
+    if (typeof error === 'string') return error
+    if (typeof error === 'object' && 'message' in error) {
+      const message = (error as { message: unknown }).message
+      if (typeof message === 'string' && message.trim()) return message
+    }
   }
-  return String(first)
+  return undefined
+}
+
+function validateEmail(value: string): string | undefined {
+  const result = loginSchema.shape.email.safeParse(value)
+  return result.success ? undefined : result.error.issues[0]?.message
+}
+
+function validatePassword(value: string): string | undefined {
+  const result = loginSchema.shape.password.safeParse(value)
+  return result.success ? undefined : result.error.issues[0]?.message
+}
+
+function readRememberedEmail(): { email: string; rememberMe: boolean } {
+  try {
+    const email = localStorage.getItem(REMEMBER_KEY) ?? ''
+    return { email, rememberMe: Boolean(email) }
+  } catch {
+    return { email: '', rememberMe: false }
+  }
+}
+
+function loginFailureNotice(error: unknown): { title: string; message: string } {
+  if (error instanceof ApiError) {
+    if (error.status === 401) {
+      return {
+        title: 'Sign-in failed',
+        message: 'Invalid email or password. Please try again.',
+      }
+    }
+    if (error.status === 403) {
+      return {
+        title: 'Access denied',
+        message:
+          'This account is not allowed to sign in. Contact your administrator if you need access.',
+      }
+    }
+    if (error.status >= 500) {
+      return {
+        title: 'Server unavailable',
+        message: 'We could not complete sign-in right now. Please try again shortly.',
+      }
+    }
+  }
+
+  return {
+    title: 'Sign-in failed',
+    message: 'Unable to reach the server. Check your connection and try again.',
+  }
 }
 
 export default function LoginPage() {
   const { login, isAuthenticated, isBootstrapping } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const [error, setError] = useState<string | null>(null)
+  const remembered = readRememberedEmail()
 
   const from =
     (location.state as { from?: string } | null)?.from &&
@@ -31,19 +89,31 @@ export default function LoginPage() {
 
   const form = useForm({
     defaultValues: {
-      email: '',
+      email: remembered.email,
       password: '',
-    },
-    validators: {
-      onSubmit: loginSchema,
+      rememberMe: remembered.rememberMe,
     },
     onSubmit: async ({ value }) => {
-      setError(null)
+      try {
+        if (value.rememberMe) {
+          localStorage.setItem(REMEMBER_KEY, value.email.trim())
+        } else {
+          localStorage.removeItem(REMEMBER_KEY)
+        }
+      } catch {
+        // Ignore storage failures in private browsing.
+      }
+
       try {
         await login(value.email, value.password)
         navigate(from, { replace: true })
       } catch (err) {
-        setError(errorMessage(err, 'Invalid email or password'))
+        const notice = loginFailureNotice(err)
+        notifications.show({
+          color: 'red',
+          title: notice.title,
+          message: notice.message,
+        })
       }
     },
   })
@@ -59,85 +129,152 @@ export default function LoginPage() {
   return (
     <form
       className={classes.form}
+      noValidate
       onSubmit={(event) => {
         event.preventDefault()
         event.stopPropagation()
         void form.handleSubmit()
       }}
     >
-      <Stack gap={18}>
-        {error ? (
-          <Alert color="red" variant="light" radius="md" className={classes.alert}>
-            {error}
-          </Alert>
-        ) : null}
+      <header className={classes.header}>
+        <h1 className={classes.title}>Welcome back</h1>
+        <p className={classes.subtitle}>
+          Enter your work email and password to continue to Workfora.
+        </p>
+      </header>
 
-        <form.Field name="email">
-          {(field) => (
-            <TextInput
-              label="Email"
-              placeholder="name@company.com"
-              size="md"
-              radius="md"
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(event) => field.handleChange(event.currentTarget.value)}
-              error={formatFieldError(field.state.meta.errors)}
-              autoComplete="username"
-              autoFocus
-              classNames={{ label: classes.label, input: classes.input }}
-            />
-          )}
-        </form.Field>
+      <div className={classes.fields}>
+        <form.Subscribe selector={(state) => state.submissionAttempts}>
+          {(submissionAttempts) => {
+            const showFieldErrors = submissionAttempts > 0
 
-        <form.Field name="password">
-          {(field) => (
-            <PasswordInput
-              label="Password"
-              placeholder="Enter your password"
-              size="md"
-              radius="md"
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(event) => field.handleChange(event.currentTarget.value)}
-              error={formatFieldError(field.state.meta.errors)}
-              autoComplete="current-password"
-              classNames={{ label: classes.label, input: classes.input }}
-            />
-          )}
-        </form.Field>
+            return (
+              <>
+                <form.Field
+                  name="email"
+                  validators={{
+                    onSubmit: ({ value }) => validateEmail(value),
+                  }}
+                >
+                  {(field) => {
+                    const message = formatFieldError(field.state.meta.errors)
+                    const showError = showFieldErrors && Boolean(message)
 
-        <form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting] as const}>
-          {([canSubmit, isSubmitting]) => (
+                    return (
+                      <div className={classes.field}>
+                        <TextInput
+                          label="Email address"
+                          placeholder="name@company.com"
+                          size="md"
+                          radius="md"
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(event) => field.handleChange(event.currentTarget.value)}
+                          error={showError}
+                          autoComplete="username"
+                          autoFocus={!remembered.email}
+                          classNames={{ label: classes.label, input: classes.input }}
+                        />
+                        <div className={classes.errorSpace} aria-live="polite">
+                          {showError ? message : '\u00a0'}
+                        </div>
+                      </div>
+                    )
+                  }}
+                </form.Field>
+
+                <form.Field
+                  name="password"
+                  validators={{
+                    onSubmit: ({ value }) => validatePassword(value),
+                  }}
+                >
+                  {(field) => {
+                    const message = formatFieldError(field.state.meta.errors)
+                    const showError = showFieldErrors && Boolean(message)
+
+                    return (
+                      <div className={classes.field}>
+                        <PasswordInput
+                          label="Password"
+                          placeholder="Enter your password"
+                          size="md"
+                          radius="md"
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(event) => field.handleChange(event.currentTarget.value)}
+                          error={showError}
+                          autoComplete="current-password"
+                          visibilityToggleButtonProps={{
+                            'aria-label': 'Toggle password visibility',
+                          }}
+                          classNames={{ label: classes.label, input: classes.input }}
+                        />
+                        <div className={classes.errorSpace} aria-live="polite">
+                          {showError ? message : '\u00a0'}
+                        </div>
+                      </div>
+                    )
+                  }}
+                </form.Field>
+              </>
+            )
+          }}
+        </form.Subscribe>
+
+        <div className={classes.row}>
+          <form.Field name="rememberMe">
+            {(field) => (
+              <Checkbox
+                label="Remember me"
+                checked={field.state.value}
+                onChange={(event) => field.handleChange(event.currentTarget.checked)}
+                size="sm"
+              />
+            )}
+          </form.Field>
+
+          <Anchor
+            href="#forgot-password"
+            className={classes.forgot}
+            onClick={(event) => {
+              event.preventDefault()
+              notifications.show({
+                color: 'gray',
+                title: 'Password reset',
+                message: 'Password recovery will be available in a later release.',
+              })
+            }}
+          >
+            Forgot password?
+          </Anchor>
+        </div>
+
+        <form.Subscribe selector={(state) => state.isSubmitting}>
+          {(isSubmitting) => (
             <Button
               type="submit"
               size="md"
               radius="md"
               fullWidth
               loading={isSubmitting}
-              disabled={!canSubmit}
+              disabled={isSubmitting}
               className={classes.submit}
-              mt={4}
             >
-              Continue
+              Sign in
             </Button>
           )}
         </form.Subscribe>
 
-        <Stack gap={6} mt={6} className={classes.hint}>
-          <Text size="xs" c="dimmed" ta="center">
-            Demo accounts · password <Text span fw={500}>Admin123!</Text>
-          </Text>
+        <div className={classes.demo}>
+          <p className={classes.demoHint}>
+            Demo accounts · password <span className={classes.demoPassword}>Admin123!</span>
+          </p>
           <div className={classes.demoRoles}>
-            {(
-              [
-                { email: 'admin@workfora.com', label: 'Admin' },
-                { email: 'manager@workfora.com', label: 'Manager' },
-                { email: 'employee@workfora.com', label: 'Employee' },
-              ] as const
-            ).map((account) => (
+            {DEMO_ACCOUNTS.map((account) => (
               <UnstyledButton
                 key={account.email}
+                type="button"
                 className={classes.demoFill}
                 onClick={() => {
                   form.setFieldValue('email', account.email)
@@ -148,8 +285,25 @@ export default function LoginPage() {
               </UnstyledButton>
             ))}
           </div>
-        </Stack>
-      </Stack>
+        </div>
+      </div>
+
+      <footer className={classes.footer}>
+        <Anchor
+          href="#privacy"
+          className={classes.footerLink}
+          onClick={(event) => event.preventDefault()}
+        >
+          Privacy Policy
+        </Anchor>
+        <Anchor
+          href="#terms"
+          className={classes.footerLink}
+          onClick={(event) => event.preventDefault()}
+        >
+          Terms of Service
+        </Anchor>
+      </footer>
     </form>
   )
 }

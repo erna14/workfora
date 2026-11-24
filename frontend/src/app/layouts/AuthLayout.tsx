@@ -1,34 +1,52 @@
-import { Box, Group, Stack, Text, Title, useComputedColorScheme } from '@mantine/core'
+import { useComputedColorScheme } from '@mantine/core'
 import { Outlet } from 'react-router'
 import { ColorSchemeToggle } from '../../components/shared/ColorSchemeToggle'
+import { WorkforaMark } from '../../components/shared/WorkforaMark'
 import classes from './AuthLayout.module.css'
 
 export function AuthLayout() {
   const colorScheme = useComputedColorScheme('light')
   const isDark = colorScheme === 'dark'
+  const year = new Date().getFullYear()
 
   return (
-    <Box className={classes.root} data-dark={isDark || undefined}>
-      <Group className={classes.topBar} justify="space-between">
-        <Text className={classes.topBrand} visibleFrom="xs">
-          Workfora
-        </Text>
-        <ColorSchemeToggle />
-      </Group>
+    <div className={classes.root} data-dark={isDark || undefined}>
+      <aside className={classes.brandPane} aria-label="Workfora">
+        <div className={classes.brandTop}>
+          <div className={classes.brandLockup}>
+            <WorkforaMark size={32} />
+            <span className={classes.brandName}>Workfora</span>
+          </div>
+        </div>
 
-      <Box className={classes.stage}>
-        <Stack className={classes.panel} gap={0}>
-          <Stack gap={8} mb={36} className={classes.intro}>
-            <Title order={1} className={classes.headline}>
-              Welcome back
-            </Title>
-            <Text className={classes.subhead}>
-              Sign in to continue to your workspace.
-            </Text>
-          </Stack>
-          <Outlet />
-        </Stack>
-      </Box>
-    </Box>
+        <div className={classes.brandCopy}>
+          <p className={classes.brandEyebrow}>Workforce platform</p>
+          <h1 className={classes.brandTitle}>People operations, clearly organized.</h1>
+          <p className={classes.brandSubtitle}>
+            Sign in to manage attendance, leave, and your team from one secure workspace.
+          </p>
+        </div>
+
+        <p className={classes.brandFoot}>© {year} Workfora</p>
+      </aside>
+
+      <section className={classes.formPane}>
+        <div className={classes.formPaneTop}>
+          <div className={classes.mobileBrand}>
+            <WorkforaMark size={28} />
+            <span className={classes.mobileBrandName}>Workfora</span>
+          </div>
+          <div className={classes.themeToggle}>
+            <ColorSchemeToggle />
+          </div>
+        </div>
+
+        <div className={classes.formPaneBody}>
+          <div className={classes.formFrame}>
+            <Outlet />
+          </div>
+        </div>
+      </section>
+    </div>
   )
 }

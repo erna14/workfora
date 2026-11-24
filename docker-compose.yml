@@ -30,7 +30,7 @@ services:
       DB_USER: workfora
       DB_PASSWORD: workfora
       JWT_SECRET: change-me-to-a-very-long-secret-key-for-workfora-dev-only-32chars
-      CORS_ORIGINS: http://localhost:${WORKFORA_HTTP_PORT:-8080}
+      CORS_ORIGINS: http://localhost:${WORKFORA_HTTP_PORT:-8080},http://localhost:5173
       DOCUMENTS_PATH: /data/documents
     volumes:
       - workfora_documents:/data/documents

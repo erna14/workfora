@@ -2,35 +2,132 @@
   width: 100%;
 }
 
+.header {
+  margin-bottom: 1.75rem;
+}
+
+.logoRow {
+  display: none;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 1.25rem;
+  color: var(--mantine-color-brand-6);
+}
+
+.logoName {
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--mantine-color-text);
+}
+
+.title {
+  margin: 0;
+  font-size: 1.65rem;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.2;
+  color: var(--mantine-color-text);
+}
+
+.subtitle {
+  margin: 0.5rem 0 0;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--mantine-color-dimmed);
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+}
+
 .label {
-  font-size: 0.8rem;
+  font-size: 0.8125rem;
   font-weight: 500;
-  margin-bottom: 6px;
+  margin-bottom: 0.4rem;
   color: var(--mantine-color-text);
 }
 
 .input {
   min-height: 44px;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
 }
 
-.alert {
-  border: 1px solid color-mix(in srgb, var(--mantine-color-red-6) 25%, transparent);
+/* Always reserve one line so error text does not push the layout. */
+.errorSpace {
+  min-height: 1.25rem;
+  margin-top: 0.3rem;
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+  color: var(--mantine-color-red-6);
+}
+
+.field :global(.mantine-TextInput-error),
+.field :global(.mantine-PasswordInput-error) {
+  display: none;
+}
+
+.input:focus,
+.input:focus-within {
+  border-color: var(--mantine-color-brand-5);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mantine-color-brand-6) 16%, transparent);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.15rem;
+}
+
+.forgot {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--mantine-color-brand-6);
+}
+
+.forgot:hover {
+  color: var(--mantine-color-brand-7);
 }
 
 .submit {
+  margin-top: 0.55rem;
+  min-height: 44px;
   font-weight: 600;
   letter-spacing: -0.01em;
 }
 
-.hint {
-  letter-spacing: 0.01em;
+.demo {
+  margin-top: 0.85rem;
+  text-align: center;
+}
+
+.demoHint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--mantine-color-dimmed);
+}
+
+.demoPassword {
+  font-weight: 500;
+  color: var(--mantine-color-text);
 }
 
 .demoRoles {
   display: flex;
   justify-content: center;
-  gap: 0.75rem;
+  gap: 0.65rem;
   flex-wrap: wrap;
+  margin-top: 0.55rem;
 }
 
 .demoFill {
@@ -43,12 +140,59 @@
   background: color-mix(in srgb, var(--mantine-color-brand-6) 8%, transparent);
 }
 
+.demoFill:hover {
+  background: color-mix(in srgb, var(--mantine-color-brand-6) 14%, transparent);
+}
+
+.footer {
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--workfora-border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  justify-content: center;
+}
+
+.footerLink {
+  font-size: 0.75rem;
+  color: var(--mantine-color-dimmed);
+}
+
+.footerLink:hover {
+  color: var(--mantine-color-text);
+}
+
+@media (max-width: 900px) {
+  .logoRow {
+    display: none;
+  }
+}
+
+[data-mantine-color-scheme='dark'] .forgot {
+  color: var(--mantine-color-brand-4);
+}
+
+[data-mantine-color-scheme='dark'] .forgot:hover {
+  color: var(--mantine-color-brand-3);
+}
+
 [data-mantine-color-scheme='dark'] .demoFill {
   color: var(--mantine-color-brand-4);
   border-color: rgba(96, 165, 250, 0.28);
   background: rgba(96, 165, 250, 0.1);
 }
 
-.demoFill:hover {
-  background: color-mix(in srgb, var(--mantine-color-brand-6) 14%, transparent);
+[data-mantine-color-scheme='dark'] .demoFill:hover {
+  background: rgba(96, 165, 250, 0.16);
+}
+
+[data-mantine-color-scheme='dark'] .errorSpace {
+  color: var(--mantine-color-red-4);
+}
+
+[data-mantine-color-scheme='dark'] .input:focus,
+[data-mantine-color-scheme='dark'] .input:focus-within {
+  border-color: var(--mantine-color-brand-4);
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.18);
 }
