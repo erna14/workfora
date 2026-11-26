@@ -136,23 +136,25 @@ export function AppShellLayout() {
                 </Text>
               ) : null}
               {group.items.map((item) => (
-                <NavLink
-                  key={item.to}
-                  component={RouterNavLink}
-                  to={item.to}
-                  end={item.to === '/'}
-                  label={collapsed ? undefined : item.label}
-                  leftSection={item.icon}
-                  onClick={() => {
-                    if (mobileOpened) toggleMobile()
-                  }}
-                  styles={{
-                    root: {
-                      borderRadius: 8,
-                      marginBottom: 2,
-                    },
-                  }}
-                />
+                <Tooltip key={item.to} label={item.label} position="right" disabled={!collapsed}>
+                  <NavLink
+                    component={RouterNavLink}
+                    to={item.to}
+                    end={item.to === '/'}
+                    label={collapsed ? undefined : item.label}
+                    aria-label={collapsed ? item.label : undefined}
+                    leftSection={item.icon}
+                    onClick={() => {
+                      if (mobileOpened) toggleMobile()
+                    }}
+                    styles={{
+                      root: {
+                        borderRadius: 8,
+                        marginBottom: 2,
+                      },
+                    }}
+                  />
+                </Tooltip>
               ))}
             </Box>
           ))}
