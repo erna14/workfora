@@ -5,23 +5,14 @@ import { useAuth } from '../../app/providers/AuthProvider'
 import type { Position } from '../../types/organization'
 import { useDepartmentsQuery } from './hooks'
 import { positionFormSchema, type PositionFormValues } from './schemas'
-import { activeDepartmentOptions, resolveDepartmentSelection } from './structure'
+import { fieldError } from '../../utils/fieldError'
+import { activeDepartmentOptions, orgUnitStatusOptions, resolveDepartmentSelection } from './structure'
 
 interface PositionFormProps {
   position?: Position | null
   submitLabel: string
   onSubmit: (values: PositionFormValues) => Promise<void>
   onCancel: () => void
-}
-
-function fieldError(errors: unknown[]): string | undefined {
-  const first = errors[0]
-  if (!first) return undefined
-  if (typeof first === 'string') return first
-  if (typeof first === 'object' && first && 'message' in first) {
-    return String((first as { message: unknown }).message)
-  }
-  return String(first)
 }
 
 function toValues(position?: Position | null): PositionFormValues {
@@ -147,10 +138,7 @@ export function PositionForm({ position, submitLabel, onSubmit, onCancel }: Posi
           {(field) => (
             <Select
               label="Status"
-              data={[
-                { value: 'ACTIVE', label: 'Active' },
-                { value: 'INACTIVE', label: 'Inactive' },
-              ]}
+              data={orgUnitStatusOptions}
               value={field.state.value}
               onChange={(value) => field.handleChange(value === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE')}
             />

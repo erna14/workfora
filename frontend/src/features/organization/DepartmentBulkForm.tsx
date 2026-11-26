@@ -2,22 +2,14 @@ import { Button, Group, Select, Stack, Text } from '@mantine/core'
 import { useForm } from '@tanstack/react-form'
 import { useMemo } from 'react'
 import { useEmployeesQuery } from '../employees/hooks'
+import { fieldError } from '../../utils/fieldError'
 import { departmentBulkSchema, type DepartmentBulkValues } from './schemas'
+import { orgUnitStatusOptions } from './structure'
 
 interface DepartmentBulkFormProps {
   count: number
   onSubmit: (values: DepartmentBulkValues) => Promise<void>
   onCancel: () => void
-}
-
-function fieldError(errors: unknown[]): string | undefined {
-  const first = errors[0]
-  if (!first) return undefined
-  if (typeof first === 'string') return first
-  if (typeof first === 'object' && first && 'message' in first) {
-    return String((first as { message: unknown }).message)
-  }
-  return String(first)
 }
 
 export function DepartmentBulkForm({ count, onSubmit, onCancel }: DepartmentBulkFormProps) {
@@ -64,11 +56,7 @@ export function DepartmentBulkForm({ count, onSubmit, onCancel }: DepartmentBulk
           {(field) => (
             <Select
               label="Status"
-              data={[
-                { value: '__keep__', label: 'No change' },
-                { value: 'ACTIVE', label: 'Active' },
-                { value: 'INACTIVE', label: 'Inactive' },
-              ]}
+              data={[{ value: '__keep__', label: 'No change' }, ...orgUnitStatusOptions]}
               value={field.state.value}
               onChange={(value) => field.handleChange(value === 'INACTIVE' || value === 'ACTIVE' ? value : '__keep__')}
               error={fieldError(field.state.meta.errors)}

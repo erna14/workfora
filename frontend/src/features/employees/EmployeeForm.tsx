@@ -5,6 +5,7 @@ import { useAuth } from '../../app/providers/AuthProvider'
 import { EMPLOYEE_STATUSES, type EmployeeDetail } from '../../types/employee'
 import { useDepartmentsQuery, useLocationsQuery, usePositionsQuery, useTeamsQuery } from '../organization/hooks'
 import { activeDepartmentOptions, activePositionOptions, resolveDepartmentSelection } from '../organization/structure'
+import { fieldError } from '../../utils/fieldError'
 import { employeeFormSchema, type EmployeeFormValues } from './schemas'
 
 interface EmployeeFormProps {
@@ -33,16 +34,6 @@ function toFormValues(employee?: EmployeeDetail, initial?: Partial<EmployeeFormV
     locationId: employee?.locationId ?? initial?.locationId ?? '',
     jobTitle: employee?.jobTitle ?? initial?.jobTitle ?? '',
   }
-}
-
-function fieldError(errors: unknown[]): string | undefined {
-  const first = errors[0]
-  if (!first) return undefined
-  if (typeof first === 'string') return first
-  if (typeof first === 'object' && first && 'message' in first) {
-    return String((first as { message: unknown }).message)
-  }
-  return String(first)
 }
 
 export function EmployeeForm({

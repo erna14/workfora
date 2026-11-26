@@ -56,11 +56,12 @@ export default function VerifyEmailPage() {
     },
   })
 
+  const { mutate: verify } = verifyMutation
+
   useEffect(() => {
     if (!tokenFromQuery) return
-    verifyMutation.mutate(tokenFromQuery)
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once per token
-  }, [tokenFromQuery])
+    verify(tokenFromQuery)
+  }, [tokenFromQuery, verify])
 
   return (
     <div className={classes.form}>

@@ -1,8 +1,7 @@
 import { Button, Group, Select, Stack, Text, TextInput } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
-import { useQueryClient } from '@tanstack/react-query'
 import { Plus, Search } from 'lucide-react'
-import { useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useAuth } from '../../app/providers/AuthProvider'
 import { StatusBadge } from '../../components/shared/StatusBadge'
 import { AppDrawer } from '../../components/ui/AppDrawer'
@@ -11,16 +10,18 @@ import { TableBulkActions } from '../../components/ui/TableBulkActions'
 import { TableFilterActions } from '../../components/ui/TableFilterActions'
 import { TableToolbar } from '../../components/ui/TableToolbar'
 import { TableRowActions } from '../../components/ui/TableRowActions'
+import { useDrawerList } from '../../components/ui/useDrawerList'
 import { useRowSelection } from '../../components/ui/useRowSelection'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { QueryState } from '../../components/ui/QueryState'
 import { useDebouncedValue } from '../../hooks/useDebouncedValue'
 import type { Department, OrgUnitStatus } from '../../types/organization'
 import { errorMessage, formatDateTime } from '../../utils/format'
-import { deleteDepartment, updateDepartment } from './api'
 import { DepartmentBulkForm } from './DepartmentBulkForm'
 import { DepartmentForm } from './DepartmentForm'
 import {
+  useBulkDeleteDepartmentsMutation,
+  useBulkUpdateDepartmentsMutation,
   useCreateDepartmentMutation,
   useDepartmentListQuery,
   useDepartmentStatusMutation,
@@ -29,10 +30,12 @@ import {
 import type { DepartmentBulkValues, DepartmentFormValues } from './schemas'
 import {
   bulkDeleteConfirmation,
+  bulkOutcomeNotice,
   departmentBulkPatch,
   departmentSortOptions,
   departmentWriteFromBulk,
-  settleBulk,
+  orgUnitStatusOptions,
+  parseOrgUnitStatus,
 } from './structure'
 
 const helper = createDataTableHelper<Department>()
@@ -54,14 +57,18 @@ export default function DepartmentsPage() {
   const [debouncedSearch] = useDebouncedValue(search, 300)
   const [mode, setMode] = useState<EditorMode>(null)
   const [selected, setSelected] = useState<Department | null>(null)
-  const [pendingDelete, setPendingDelete] = useState<Department[]>([])
-  const [deleteOpen, setDeleteOpen] = useState(false)
-  const deleteOpenRef = useRef(false)
-  const [deleteErrors, setDeleteErrors] = useState<string[]>([])
   const [bulkEdit, setBulkEdit] = useState(false)
   const [bulkErrors, setBulkErrors] = useState<string[]>([])
-  const [busy, setBusy] = useState(false)
-  const queryClient = useQueryClient()
+  const {
+    opened: deleteOpened,
+    items: pendingDelete,
+    errors: deleteErrors,
+    setErrors: setDeleteErrors,
+    setItems: setPendingDelete,
+    setVisible: setDeleteVisible,
+    ask: askDelete,
+    onExitTransitionEnd: clearDeleteAfterClose,
+  } = useDrawerList<Department>()
 
   const query = useDepartmentListQuery({
     page,
@@ -74,8 +81,39 @@ export default function DepartmentsPage() {
   const createMutation = useCreateDepartmentMutation()
   const updateMutation = useUpdateDepartmentMutation()
   const statusMutation = useDepartmentStatusMutation()
+  const bulkDelete = useBulkDeleteDepartmentsMutation()
+  const bulkUpdate = useBulkUpdateDepartmentsMutation()
+  const busy = bulkDelete.isPending || bulkUpdate.isPending
   const rows = query.data?.data
   const selection = useRowSelection(rows)
+
+  const open = useCallback((next: EditorMode, department: Department | null) => {
+    setSelected(department)
+    setMode(next)
+  }, [])
+
+  const close = useCallback(() => {
+    setMode(null)
+    setSelected(null)
+  }, [])
+
+  const { mutate: changeDepartmentStatus } = statusMutation
+  const changeStatus = useCallback(
+    (department: Department, next: OrgUnitStatus) => {
+      changeDepartmentStatus(
+        { id: department.id, status: next },
+        {
+          onSuccess: () => {
+            notifications.show({
+              color: 'green',
+              message: next === 'ACTIVE' ? 'Department reactivated' : 'Department deactivated',
+            })
+          },
+        },
+      )
+    },
+    [changeDepartmentStatus],
+  )
 
   const columns = useMemo(
     () =>
@@ -107,18 +145,8 @@ export default function DepartmentsPage() {
           ),
         }),
       ]),
-    [canDelete, canUpdate],
+    [askDelete, canDelete, canUpdate, changeStatus, open],
   )
-
-  function open(next: EditorMode, department: Department | null) {
-    setSelected(department)
-    setMode(next)
-  }
-
-  function close() {
-    setMode(null)
-    setSelected(null)
-  }
 
   async function save(values: DepartmentFormValues) {
     const payload = {
@@ -143,113 +171,43 @@ export default function DepartmentsPage() {
     }
   }
 
-  async function changeStatus(department: Department, next: OrgUnitStatus) {
-    await statusMutation.mutateAsync({ id: department.id, status: next })
-    notifications.show({
-      color: 'green',
-      message: next === 'ACTIVE' ? 'Department reactivated' : 'Department deactivated',
-    })
-  }
-
-  function setDeleteVisible(open: boolean) {
-    deleteOpenRef.current = open
-    setDeleteOpen(open)
-  }
-
-  function askDelete(items: Department[]) {
-    setDeleteErrors([])
-    setPendingDelete(items)
-    setDeleteVisible(true)
-  }
-
   async function confirmDelete() {
     if (pendingDelete.length === 0 || busy) return
-    setBusy(true)
     setDeleteErrors([])
     try {
-      const result = await settleBulk(
-        pendingDelete.map((department) => ({
-          id: department.id,
-          label: department.name,
-          run: () => deleteDepartment(department.id, organizationId ?? undefined),
-        })),
-        errorMessage,
+      const result = await bulkDelete.mutateAsync(
+        pendingDelete.map((department) => ({ id: department.id, label: department.name })),
       )
-      if (result.succeededIds.length > 0) {
-        await queryClient.invalidateQueries({ queryKey: ['departments'] })
-        await queryClient.invalidateQueries({ queryKey: ['positions'] })
-        selection.remove(result.succeededIds)
-      }
+      if (result.succeededIds.length > 0) selection.remove(result.succeededIds)
       const succeeded = new Set(result.succeededIds)
       const remaining = pendingDelete.filter((department) => !succeeded.has(department.id))
       setDeleteErrors(result.failures)
       if (remaining.length === 0) setDeleteVisible(false)
       else setPendingDelete(remaining)
-      if (result.failures.length === 0) {
-        notifications.show({
-          color: 'green',
-          message:
-            result.succeededIds.length === 1
-              ? 'Department deleted'
-              : `${result.succeededIds.length} departments deleted`,
-        })
-      } else {
-        notifications.show({
-          color: result.succeededIds.length === 0 ? 'red' : 'yellow',
-          message:
-            result.succeededIds.length === 0
-              ? (result.failures[0] ?? 'Delete failed')
-              : `Deleted ${result.succeededIds.length}. ${result.failures.length} could not be deleted.`,
-        })
-      }
-    } finally {
-      setBusy(false)
+      notifications.show(bulkOutcomeNotice('deleted', 'Department', 'departments', result))
+    } catch (error) {
+      notifications.show({ color: 'red', message: errorMessage(error) })
     }
   }
 
   async function applyBulkEdit(values: DepartmentBulkValues) {
     const patch = departmentBulkPatch(values)
     const targets = selection.selectedRows
-    if (!patch || targets.length === 0) return
-    setBusy(true)
+    if (!patch || targets.length === 0 || busy) return
     try {
-    const result = await settleBulk(
-      targets.map((department) => ({
-        id: department.id,
-        label: department.name,
-        run: () =>
-          updateDepartment(department.id, departmentWriteFromBulk(department, patch), organizationId ?? undefined).then(
-            () => undefined,
-          ),
-      })),
-      errorMessage,
-    )
-    if (result.succeededIds.length > 0) {
-      await queryClient.invalidateQueries({ queryKey: ['departments'] })
-      await queryClient.invalidateQueries({ queryKey: ['positions'] })
-      selection.remove(result.succeededIds)
-    }
-    setBulkErrors(result.failures)
-    if (result.failures.length === 0) {
-      setBulkEdit(false)
-      notifications.show({
-        color: 'green',
-        message:
-          result.succeededIds.length === 1
-            ? 'Department updated'
-            : `${result.succeededIds.length} departments updated`,
-      })
-    } else {
-      notifications.show({
-        color: result.succeededIds.length === 0 ? 'red' : 'yellow',
-        message:
-          result.succeededIds.length === 0
-            ? (result.failures[0] ?? 'Update failed')
-            : `Updated ${result.succeededIds.length}. ${result.failures.length} could not be updated.`,
-      })
-    }
-    } finally {
-      setBusy(false)
+      const result = await bulkUpdate.mutateAsync(
+        targets.map((department) => ({
+          id: department.id,
+          label: department.name,
+          payload: departmentWriteFromBulk(department, patch),
+        })),
+      )
+      if (result.succeededIds.length > 0) selection.remove(result.succeededIds)
+      setBulkErrors(result.failures)
+      if (result.failures.length === 0) setBulkEdit(false)
+      notifications.show(bulkOutcomeNotice('updated', 'Department', 'departments', result))
+    } catch (error) {
+      notifications.show({ color: 'red', message: errorMessage(error) })
     }
   }
 
@@ -289,13 +247,10 @@ export default function DepartmentsPage() {
             <Select
               placeholder="Status"
               clearable
-              data={[
-                { value: 'ACTIVE', label: 'Active' },
-                { value: 'INACTIVE', label: 'Inactive' },
-              ]}
+              data={orgUnitStatusOptions}
               value={status}
               onChange={(value) => {
-                setStatus(value === 'INACTIVE' ? 'INACTIVE' : value === 'ACTIVE' ? 'ACTIVE' : null)
+                setStatus(parseOrgUnitStatus(value))
                 setPage(0)
               }}
             />
@@ -456,16 +411,11 @@ export default function DepartmentsPage() {
       </AppDrawer>
 
       <AppDrawer
-        opened={deleteOpen}
+        opened={deleteOpened}
         onClose={() => {
           if (!busy) setDeleteVisible(false)
         }}
-        onExitTransitionEnd={() => {
-          if (!deleteOpenRef.current) {
-            setPendingDelete([])
-            setDeleteErrors([])
-          }
-        }}
+        onExitTransitionEnd={clearDeleteAfterClose}
         title={confirmation.title}
       >
         <Stack>

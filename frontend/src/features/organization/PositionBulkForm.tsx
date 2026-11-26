@@ -4,22 +4,13 @@ import { useMemo } from 'react'
 import { useAuth } from '../../app/providers/AuthProvider'
 import { useDepartmentsQuery } from './hooks'
 import { positionBulkSchema, type PositionBulkValues } from './schemas'
-import { activeDepartmentOptions } from './structure'
+import { fieldError } from '../../utils/fieldError'
+import { activeDepartmentOptions, orgUnitStatusOptions } from './structure'
 
 interface PositionBulkFormProps {
   count: number
   onSubmit: (values: PositionBulkValues) => Promise<void>
   onCancel: () => void
-}
-
-function fieldError(errors: unknown[]): string | undefined {
-  const first = errors[0]
-  if (!first) return undefined
-  if (typeof first === 'string') return first
-  if (typeof first === 'object' && first && 'message' in first) {
-    return String((first as { message: unknown }).message)
-  }
-  return String(first)
 }
 
 export function PositionBulkForm({ count, onSubmit, onCancel }: PositionBulkFormProps) {
@@ -65,11 +56,7 @@ export function PositionBulkForm({ count, onSubmit, onCancel }: PositionBulkForm
           {(field) => (
             <Select
               label="Status"
-              data={[
-                { value: '__keep__', label: 'No change' },
-                { value: 'ACTIVE', label: 'Active' },
-                { value: 'INACTIVE', label: 'Inactive' },
-              ]}
+              data={[{ value: '__keep__', label: 'No change' }, ...orgUnitStatusOptions]}
               value={field.state.value}
               onChange={(value) => field.handleChange(value === 'INACTIVE' || value === 'ACTIVE' ? value : '__keep__')}
               error={fieldError(field.state.meta.errors)}

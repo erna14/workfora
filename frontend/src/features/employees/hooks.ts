@@ -33,7 +33,10 @@ export function useEmployeesQuery(params: EmployeeListParams) {
 export function useEmployeeQuery(id: string | undefined) {
   return useQuery({
     queryKey: employeeKeys.detail(id ?? ''),
-    queryFn: () => fetchEmployee(id!),
+    queryFn: () => {
+      if (!id) throw new Error('Employee id is required')
+      return fetchEmployee(id)
+    },
     enabled: Boolean(id),
   })
 }

@@ -4,10 +4,12 @@ import {
   activeDepartmentOptions,
   activePositionOptions,
   bulkDeleteConfirmation,
+  bulkOutcomeNotice,
   deleteConfirmation,
   departmentBulkPatch,
   departmentQueryKey,
   departmentWriteFromBulk,
+  parseOrgUnitStatus,
   positionBulkPatch,
   positionQueryKey,
   positionWriteFromBulk,
@@ -166,6 +168,32 @@ describe('department and position organization scoping', () => {
   it('confirms one delete by name and many deletes as a group', () => {
     expect(bulkDeleteConfirmation('department', ['Engineering']).title).toBe('Delete Engineering?')
     expect(bulkDeleteConfirmation('position', ['Engineer', 'Analyst']).title).toBe('Delete 2 positions?')
+  })
+
+  it('describes a full success, a full failure, and a partial bulk result', () => {
+    expect(bulkOutcomeNotice('deleted', 'Department', 'departments', { succeededIds: ['a'], failures: [] })).toEqual({
+      color: 'green',
+      message: 'Department deleted',
+    })
+    expect(
+      bulkOutcomeNotice('updated', 'Position', 'positions', {
+        succeededIds: [],
+        failures: ['Analyst: title already exists'],
+      }),
+    ).toEqual({ color: 'red', message: 'Analyst: title already exists' })
+    expect(
+      bulkOutcomeNotice('deleted', 'Department', 'departments', {
+        succeededIds: ['a', 'b'],
+        failures: ['Finance: in use'],
+      }),
+    ).toEqual({ color: 'yellow', message: 'Deleted 2. 1 could not be deleted.' })
+  })
+
+  it('accepts only the organization unit statuses', () => {
+    expect(parseOrgUnitStatus('ACTIVE')).toBe('ACTIVE')
+    expect(parseOrgUnitStatus('INACTIVE')).toBe('INACTIVE')
+    expect(parseOrgUnitStatus('OPEN')).toBeNull()
+    expect(parseOrgUnitStatus(null)).toBeNull()
   })
 
   it('keeps going when one bulk action fails', async () => {

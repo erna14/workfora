@@ -2,7 +2,9 @@ import { Button, Group, Select, Stack, Textarea, TextInput } from '@mantine/core
 import { useForm } from '@tanstack/react-form'
 import { useMemo } from 'react'
 import { useEmployeesQuery } from '../employees/hooks'
+import { fieldError } from '../../utils/fieldError'
 import { departmentFormSchema, type DepartmentFormValues } from './schemas'
+import { orgUnitStatusOptions } from './structure'
 import type { Department } from '../../types/organization'
 
 interface DepartmentFormProps {
@@ -10,16 +12,6 @@ interface DepartmentFormProps {
   submitLabel: string
   onSubmit: (values: DepartmentFormValues) => Promise<void>
   onCancel: () => void
-}
-
-function fieldError(errors: unknown[]): string | undefined {
-  const first = errors[0]
-  if (!first) return undefined
-  if (typeof first === 'string') return first
-  if (typeof first === 'object' && first && 'message' in first) {
-    return String((first as { message: unknown }).message)
-  }
-  return String(first)
 }
 
 function toValues(department?: Department | null): DepartmentFormValues {
@@ -116,10 +108,7 @@ export function DepartmentForm({ department, submitLabel, onSubmit, onCancel }: 
           {(field) => (
             <Select
               label="Status"
-              data={[
-                { value: 'ACTIVE', label: 'Active' },
-                { value: 'INACTIVE', label: 'Inactive' },
-              ]}
+              data={orgUnitStatusOptions}
               value={field.state.value}
               onChange={(value) => field.handleChange(value === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE')}
               error={fieldError(field.state.meta.errors)}

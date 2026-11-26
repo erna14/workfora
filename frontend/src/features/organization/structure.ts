@@ -22,6 +22,16 @@ export interface SelectOption {
   label: string
 }
 
+export const orgUnitStatusOptions: Array<{ value: OrgUnitStatus; label: string }> = [
+  { value: 'ACTIVE', label: 'Active' },
+  { value: 'INACTIVE', label: 'Inactive' },
+]
+
+export function parseOrgUnitStatus(value: string | null): OrgUnitStatus | null {
+  if (value === 'ACTIVE' || value === 'INACTIVE') return value
+  return null
+}
+
 export const departmentSortOptions: SelectOption[] = [
   { value: 'name,asc', label: 'Name (A–Z)' },
   { value: 'name,desc', label: 'Name (Z–A)' },
@@ -151,10 +161,42 @@ export function positionWriteFromBulk(position: Position, patch: PositionBulkPat
   }
 }
 
+export interface BulkSettlement {
+  succeededIds: string[]
+  failures: string[]
+}
+
+export function bulkOutcomeNotice(
+  action: 'deleted' | 'updated',
+  singular: string,
+  plural: string,
+  result: BulkSettlement,
+): { color: 'green' | 'red' | 'yellow'; message: string } {
+  const succeeded = result.succeededIds.length
+  const failed = result.failures.length
+  if (failed === 0) {
+    return {
+      color: 'green',
+      message: succeeded === 1 ? `${singular} ${action}` : `${succeeded} ${plural} ${action}`,
+    }
+  }
+  if (succeeded === 0) {
+    return {
+      color: 'red',
+      message: result.failures[0] ?? (action === 'deleted' ? 'Delete failed' : 'Update failed'),
+    }
+  }
+  const verb = action === 'deleted' ? 'Deleted' : 'Updated'
+  return {
+    color: 'yellow',
+    message: `${verb} ${succeeded}. ${failed} could not be ${action}.`,
+  }
+}
+
 export async function settleBulk(
   jobs: Array<{ id: string; label: string; run: () => Promise<void> }>,
   message: (error: unknown) => string,
-): Promise<{ succeededIds: string[]; failures: string[] }> {
+): Promise<BulkSettlement> {
   const succeededIds: string[] = []
   const failures: string[] = []
   for (const job of jobs) {

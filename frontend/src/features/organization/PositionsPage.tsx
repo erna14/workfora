@@ -1,8 +1,7 @@
 import { Button, Group, Select, Stack, Text, TextInput } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
-import { useQueryClient } from '@tanstack/react-query'
 import { Plus, Search } from 'lucide-react'
-import { useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useAuth } from '../../app/providers/AuthProvider'
 import { StatusBadge } from '../../components/shared/StatusBadge'
 import { AppDrawer } from '../../components/ui/AppDrawer'
@@ -11,14 +10,16 @@ import { TableBulkActions } from '../../components/ui/TableBulkActions'
 import { TableFilterActions } from '../../components/ui/TableFilterActions'
 import { TableToolbar } from '../../components/ui/TableToolbar'
 import { TableRowActions } from '../../components/ui/TableRowActions'
+import { useDrawerList } from '../../components/ui/useDrawerList'
 import { useRowSelection } from '../../components/ui/useRowSelection'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { QueryState } from '../../components/ui/QueryState'
 import { useDebouncedValue } from '../../hooks/useDebouncedValue'
 import type { OrgUnitStatus, Position } from '../../types/organization'
 import { errorMessage, formatDateTime } from '../../utils/format'
-import { deletePosition, updatePosition } from './api'
 import {
+  useBulkDeletePositionsMutation,
+  useBulkUpdatePositionsMutation,
   useCreatePositionMutation,
   useDepartmentsQuery,
   usePositionListQuery,
@@ -31,10 +32,12 @@ import type { PositionBulkValues, PositionFormValues } from './schemas'
 import {
   activeDepartmentOptions,
   bulkDeleteConfirmation,
+  bulkOutcomeNotice,
+  orgUnitStatusOptions,
+  parseOrgUnitStatus,
   positionBulkPatch,
   positionSortOptions,
   positionWriteFromBulk,
-  settleBulk,
 } from './structure'
 
 const helper = createDataTableHelper<Position>()
@@ -57,14 +60,18 @@ export default function PositionsPage() {
   const [debouncedSearch] = useDebouncedValue(search, 300)
   const [mode, setMode] = useState<EditorMode>(null)
   const [selected, setSelected] = useState<Position | null>(null)
-  const [pendingDelete, setPendingDelete] = useState<Position[]>([])
-  const [deleteOpen, setDeleteOpen] = useState(false)
-  const deleteOpenRef = useRef(false)
-  const [deleteErrors, setDeleteErrors] = useState<string[]>([])
   const [bulkEdit, setBulkEdit] = useState(false)
   const [bulkErrors, setBulkErrors] = useState<string[]>([])
-  const [busy, setBusy] = useState(false)
-  const queryClient = useQueryClient()
+  const {
+    opened: deleteOpened,
+    items: pendingDelete,
+    errors: deleteErrors,
+    setErrors: setDeleteErrors,
+    setItems: setPendingDelete,
+    setVisible: setDeleteVisible,
+    ask: askDelete,
+    onExitTransitionEnd: clearDeleteAfterClose,
+  } = useDrawerList<Position>()
 
   const departments = useDepartmentsQuery({ activeOnly: true })
   const departmentOptions = useMemo(
@@ -84,8 +91,39 @@ export default function PositionsPage() {
   const createMutation = useCreatePositionMutation()
   const updateMutation = useUpdatePositionMutation()
   const statusMutation = usePositionStatusMutation()
+  const bulkDelete = useBulkDeletePositionsMutation()
+  const bulkUpdate = useBulkUpdatePositionsMutation()
+  const busy = bulkDelete.isPending || bulkUpdate.isPending
   const rows = query.data?.data
   const selection = useRowSelection(rows)
+
+  const open = useCallback((next: EditorMode, position: Position | null) => {
+    setSelected(position)
+    setMode(next)
+  }, [])
+
+  const close = useCallback(() => {
+    setMode(null)
+    setSelected(null)
+  }, [])
+
+  const { mutate: changePositionStatus } = statusMutation
+  const changeStatus = useCallback(
+    (position: Position, next: OrgUnitStatus) => {
+      changePositionStatus(
+        { id: position.id, status: next },
+        {
+          onSuccess: () => {
+            notifications.show({
+              color: 'green',
+              message: next === 'ACTIVE' ? 'Position reactivated' : 'Position deactivated',
+            })
+          },
+        },
+      )
+    },
+    [changePositionStatus],
+  )
 
   const columns = useMemo(
     () =>
@@ -116,18 +154,8 @@ export default function PositionsPage() {
           ),
         }),
       ]),
-    [canDelete, canUpdate],
+    [askDelete, canDelete, canUpdate, changeStatus, open],
   )
-
-  function open(next: EditorMode, position: Position | null) {
-    setSelected(position)
-    setMode(next)
-  }
-
-  function close() {
-    setMode(null)
-    setSelected(null)
-  }
 
   async function save(values: PositionFormValues) {
     const payload = {
@@ -151,109 +179,43 @@ export default function PositionsPage() {
     }
   }
 
-  async function changeStatus(position: Position, next: OrgUnitStatus) {
-    await statusMutation.mutateAsync({ id: position.id, status: next })
-    notifications.show({
-      color: 'green',
-      message: next === 'ACTIVE' ? 'Position reactivated' : 'Position deactivated',
-    })
-  }
-
-  function setDeleteVisible(open: boolean) {
-    deleteOpenRef.current = open
-    setDeleteOpen(open)
-  }
-
-  function askDelete(items: Position[]) {
-    setDeleteErrors([])
-    setPendingDelete(items)
-    setDeleteVisible(true)
-  }
-
   async function confirmDelete() {
     if (pendingDelete.length === 0 || busy) return
-    setBusy(true)
     setDeleteErrors([])
     try {
-      const result = await settleBulk(
-        pendingDelete.map((position) => ({
-          id: position.id,
-          label: position.title,
-          run: () => deletePosition(position.id, organizationId ?? undefined),
-        })),
-        errorMessage,
+      const result = await bulkDelete.mutateAsync(
+        pendingDelete.map((position) => ({ id: position.id, label: position.title })),
       )
-      if (result.succeededIds.length > 0) {
-        await queryClient.invalidateQueries({ queryKey: ['departments'] })
-        await queryClient.invalidateQueries({ queryKey: ['positions'] })
-        selection.remove(result.succeededIds)
-      }
+      if (result.succeededIds.length > 0) selection.remove(result.succeededIds)
       const succeeded = new Set(result.succeededIds)
       const remaining = pendingDelete.filter((position) => !succeeded.has(position.id))
       setDeleteErrors(result.failures)
       if (remaining.length === 0) setDeleteVisible(false)
       else setPendingDelete(remaining)
-      if (result.failures.length === 0) {
-        notifications.show({
-          color: 'green',
-          message:
-            result.succeededIds.length === 1 ? 'Position deleted' : `${result.succeededIds.length} positions deleted`,
-        })
-      } else {
-        notifications.show({
-          color: result.succeededIds.length === 0 ? 'red' : 'yellow',
-          message:
-            result.succeededIds.length === 0
-              ? (result.failures[0] ?? 'Delete failed')
-              : `Deleted ${result.succeededIds.length}. ${result.failures.length} could not be deleted.`,
-        })
-      }
-    } finally {
-      setBusy(false)
+      notifications.show(bulkOutcomeNotice('deleted', 'Position', 'positions', result))
+    } catch (error) {
+      notifications.show({ color: 'red', message: errorMessage(error) })
     }
   }
 
   async function applyBulkEdit(values: PositionBulkValues) {
     const patch = positionBulkPatch(values)
     const targets = selection.selectedRows
-    if (!patch || targets.length === 0) return
-    setBusy(true)
+    if (!patch || targets.length === 0 || busy) return
     try {
-    const result = await settleBulk(
-      targets.map((position) => ({
-        id: position.id,
-        label: position.title,
-        run: () =>
-          updatePosition(position.id, positionWriteFromBulk(position, patch), organizationId ?? undefined).then(
-            () => undefined,
-          ),
-      })),
-      errorMessage,
-    )
-    if (result.succeededIds.length > 0) {
-      await queryClient.invalidateQueries({ queryKey: ['departments'] })
-      await queryClient.invalidateQueries({ queryKey: ['positions'] })
-      selection.remove(result.succeededIds)
-    }
-    setBulkErrors(result.failures)
-    if (result.failures.length === 0) {
-      setBulkEdit(false)
-      notifications.show({
-        color: 'green',
-        message:
-          result.succeededIds.length === 1 ? 'Position updated' : `${result.succeededIds.length} positions updated`,
-      })
-    } else {
-      notifications.show({
-        color: result.succeededIds.length === 0 ? 'red' : 'yellow',
-        message:
-          result.succeededIds.length === 0
-            ? (result.failures[0] ?? 'Update failed')
-            : `Updated ${result.succeededIds.length}. ${result.failures.length} could not be updated.`,
-      })
-    }
-    } finally {
-      setBusy(false)
+      const result = await bulkUpdate.mutateAsync(
+        targets.map((position) => ({
+          id: position.id,
+          label: position.title,
+          payload: positionWriteFromBulk(position, patch),
+        })),
+      )
+      if (result.succeededIds.length > 0) selection.remove(result.succeededIds)
+      setBulkErrors(result.failures)
+      if (result.failures.length === 0) setBulkEdit(false)
+      notifications.show(bulkOutcomeNotice('updated', 'Position', 'positions', result))
+    } catch (error) {
+      notifications.show({ color: 'red', message: errorMessage(error) })
     }
   }
 
@@ -304,13 +266,10 @@ export default function PositionsPage() {
             <Select
               placeholder="Status"
               clearable
-              data={[
-                { value: 'ACTIVE', label: 'Active' },
-                { value: 'INACTIVE', label: 'Inactive' },
-              ]}
+              data={orgUnitStatusOptions}
               value={status}
               onChange={(value) => {
-                setStatus(value === 'INACTIVE' ? 'INACTIVE' : value === 'ACTIVE' ? 'ACTIVE' : null)
+                setStatus(parseOrgUnitStatus(value))
                 setPage(0)
               }}
             />
@@ -470,16 +429,11 @@ export default function PositionsPage() {
       </AppDrawer>
 
       <AppDrawer
-        opened={deleteOpen}
+        opened={deleteOpened}
         onClose={() => {
           if (!busy) setDeleteVisible(false)
         }}
-        onExitTransitionEnd={() => {
-          if (!deleteOpenRef.current) {
-            setPendingDelete([])
-            setDeleteErrors([])
-          }
-        }}
+        onExitTransitionEnd={clearDeleteAfterClose}
         title={confirmation.title}
       >
         <Stack>

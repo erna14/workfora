@@ -1,5 +1,6 @@
 import { notifications } from '@mantine/notifications'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useCallback } from 'react'
 import { useAuth } from '../../app/providers/AuthProvider'
 import type { DepartmentWrite, OrgUnitStatus, PositionWrite } from '../../types/organization'
 import { errorMessage } from '../../utils/format'
@@ -20,6 +21,8 @@ import {
 import {
   departmentQueryKey,
   positionQueryKey,
+  settleBulk,
+  type BulkSettlement,
   type DepartmentListFilters,
   type PositionListFilters,
 } from './structure'
@@ -64,16 +67,20 @@ export function usePositionsQuery(options?: { activeOnly?: boolean; departmentId
 }
 
 export function useTeamsQuery() {
+  const organizationId = useOrganizationId()
   return useQuery({
-    queryKey: ['teams'],
+    queryKey: ['teams', organizationId],
     queryFn: () => fetchTeams({ page: 0, size: 100 }),
+    enabled: Boolean(organizationId),
   })
 }
 
 export function useLocationsQuery() {
+  const organizationId = useOrganizationId()
   return useQuery({
-    queryKey: ['locations'],
+    queryKey: ['locations', organizationId],
     queryFn: () => fetchLocations({ page: 0, size: 100 }),
+    enabled: Boolean(organizationId),
   })
 }
 
@@ -83,6 +90,28 @@ function useInvalidateStructure() {
     void queryClient.invalidateQueries({ queryKey: ['departments'] })
     void queryClient.invalidateQueries({ queryKey: ['positions'] })
   }
+}
+
+function useRefreshStructure() {
+  const queryClient = useQueryClient()
+  return useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ['departments'] })
+    await queryClient.invalidateQueries({ queryKey: ['positions'] })
+  }, [queryClient])
+}
+
+interface BulkItem {
+  id: string
+  label: string
+}
+
+async function settleAndRefresh(
+  jobs: Array<BulkItem & { run: () => Promise<void> }>,
+  refresh: () => Promise<void>,
+): Promise<BulkSettlement> {
+  const result = await settleBulk(jobs, errorMessage)
+  if (result.succeededIds.length > 0) await refresh()
+  return result
 }
 
 export function useCreateDepartmentMutation() {
@@ -118,12 +147,34 @@ export function useDepartmentStatusMutation() {
   })
 }
 
-export function useDeleteDepartmentMutation() {
+export function useBulkDeleteDepartmentsMutation() {
   const organizationId = useOrganizationId()
-  const invalidate = useInvalidateStructure()
+  const refresh = useRefreshStructure()
   return useMutation({
-    mutationFn: (id: string) => deleteDepartment(id, organizationId ?? undefined),
-    onSuccess: invalidate,
+    mutationFn: (items: BulkItem[]) =>
+      settleAndRefresh(
+        items.map((item) => ({
+          ...item,
+          run: () => deleteDepartment(item.id, organizationId ?? undefined),
+        })),
+        refresh,
+      ),
+  })
+}
+
+export function useBulkUpdateDepartmentsMutation() {
+  const organizationId = useOrganizationId()
+  const refresh = useRefreshStructure()
+  return useMutation({
+    mutationFn: (items: Array<BulkItem & { payload: DepartmentWrite }>) =>
+      settleAndRefresh(
+        items.map((item) => ({
+          id: item.id,
+          label: item.label,
+          run: () => updateDepartment(item.id, item.payload, organizationId ?? undefined).then(() => undefined),
+        })),
+        refresh,
+      ),
   })
 }
 
@@ -159,11 +210,33 @@ export function usePositionStatusMutation() {
   })
 }
 
-export function useDeletePositionMutation() {
+export function useBulkDeletePositionsMutation() {
   const organizationId = useOrganizationId()
-  const invalidate = useInvalidateStructure()
+  const refresh = useRefreshStructure()
   return useMutation({
-    mutationFn: (id: string) => deletePosition(id, organizationId ?? undefined),
-    onSuccess: invalidate,
+    mutationFn: (items: BulkItem[]) =>
+      settleAndRefresh(
+        items.map((item) => ({
+          ...item,
+          run: () => deletePosition(item.id, organizationId ?? undefined),
+        })),
+        refresh,
+      ),
+  })
+}
+
+export function useBulkUpdatePositionsMutation() {
+  const organizationId = useOrganizationId()
+  const refresh = useRefreshStructure()
+  return useMutation({
+    mutationFn: (items: Array<BulkItem & { payload: PositionWrite }>) =>
+      settleAndRefresh(
+        items.map((item) => ({
+          id: item.id,
+          label: item.label,
+          run: () => updatePosition(item.id, item.payload, organizationId ?? undefined).then(() => undefined),
+        })),
+        refresh,
+      ),
   })
 }
