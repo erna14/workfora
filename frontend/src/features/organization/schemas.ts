@@ -20,3 +20,38 @@ export const positionFormSchema = z.object({
 })
 
 export type PositionFormValues = z.infer<typeof positionFormSchema>
+
+const bulkStatus = z.union([z.literal('__keep__'), z.enum(ORG_UNIT_STATUSES)])
+
+export const departmentBulkSchema = z
+  .object({
+    status: bulkStatus,
+    manager: z.string(),
+  })
+  .refine((value) => value.status !== '__keep__' || value.manager !== '__keep__', {
+    message: 'Choose at least one change',
+    path: ['status'],
+  })
+
+export type DepartmentBulkValues = z.infer<typeof departmentBulkSchema>
+
+export const positionBulkSchema = z
+  .object({
+    status: bulkStatus,
+    departmentId: z.string(),
+    levelMode: z.enum(['__keep__', 'set', 'clear']),
+    level: z.string().trim().max(50, 'Level must be 50 characters or fewer'),
+  })
+  .refine(
+    (value) =>
+      value.status !== '__keep__' ||
+      (value.departmentId !== '' && value.departmentId !== '__keep__') ||
+      value.levelMode !== '__keep__',
+    { message: 'Choose at least one change', path: ['status'] },
+  )
+  .refine((value) => value.levelMode !== 'set' || value.level.length > 0, {
+    message: 'Enter a level',
+    path: ['level'],
+  })
+
+export type PositionBulkValues = z.infer<typeof positionBulkSchema>

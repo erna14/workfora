@@ -1,0 +1,84 @@
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--mantine-spacing-sm);
+  margin-bottom: var(--mantine-spacing-md);
+}
+
+.filters {
+  display: flex;
+  flex: 1 1 18rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--mantine-spacing-sm);
+  min-width: 0;
+}
+
+.search {
+  flex: 1 1 16rem;
+  max-width: 22.5rem;
+  min-width: 0;
+}
+
+.field {
+  flex: 1 1 10rem;
+  max-width: 15rem;
+  min-width: 0;
+}
+
+.search :global(.mantine-InputWrapper-root),
+.field :global(.mantine-InputWrapper-root) {
+  width: 100%;
+}
+
+.actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--mantine-spacing-sm);
+  margin-left: auto;
+}
+
+@media (max-width: 48em) {
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filters {
+    display: grid;
+    flex: none;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    width: 100%;
+  }
+
+  .search,
+  .field {
+    max-width: none;
+  }
+
+  .search {
+    grid-column: 1 / -1;
+  }
+
+  .filters > :last-child:nth-child(even) {
+    grid-column: 1 / -1;
+  }
+
+  .actions {
+    justify-content: flex-start;
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .actions > :last-child {
+    margin-left: auto;
+  }
+
+  .actions :global(.mantine-ActionIcon-root) {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+}

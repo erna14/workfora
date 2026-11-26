@@ -38,17 +38,18 @@ a {
   color-scheme: dark;
 }
 
-.mantine-Drawer-content,
-.mantine-Drawer-header,
-.mantine-Drawer-body {
-  background-color: var(--mantine-color-body);
-}
-
 [data-mantine-color-scheme='dark'] .mantine-Card-root,
 [data-mantine-color-scheme='dark'] .mantine-Paper-root {
   background-color: var(--mantine-color-dark-6);
   border-color: var(--mantine-color-dark-4);
   box-shadow: none;
+}
+
+.mantine-Drawer-header,
+.mantine-Drawer-body,
+.mantine-Drawer-content,
+[data-mantine-color-scheme='dark'] .mantine-Drawer-content.mantine-Paper-root {
+  background-color: var(--mantine-color-body);
 }
 
 [data-mantine-color-scheme='dark'] .mantine-Table-th {

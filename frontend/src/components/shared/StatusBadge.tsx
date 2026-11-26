@@ -2,7 +2,7 @@ import { Badge } from '@mantine/core'
 
 const STATUS_COLORS: Record<string, string> = {
   ACTIVE: 'green',
-  INACTIVE: 'gray',
+  INACTIVE: 'red',
   ONBOARDING: 'blue',
   TERMINATED: 'red',
   PENDING: 'yellow',

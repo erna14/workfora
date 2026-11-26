@@ -3,10 +3,16 @@ import { departmentFormSchema, positionFormSchema } from './schemas'
 import {
   activeDepartmentOptions,
   activePositionOptions,
+  bulkDeleteConfirmation,
   deleteConfirmation,
+  departmentBulkPatch,
   departmentQueryKey,
+  departmentWriteFromBulk,
+  positionBulkPatch,
   positionQueryKey,
+  positionWriteFromBulk,
   resolveDepartmentSelection,
+  settleBulk,
 } from './structure'
 import type { Department, Position } from '../../types/organization'
 
@@ -133,6 +139,51 @@ describe('department and position organization scoping', () => {
   it('explains why deletion needs confirmation and when deactivation is the alternative', () => {
     expect(deleteConfirmation('department', 'Engineering').body).toMatch(/deactivate/i)
     expect(deleteConfirmation('position', 'Software Engineer').title).toBe('Delete Software Engineer?')
+  })
+
+  it('applies only the bulk fields and keeps each record identity', () => {
+    const engineering = department({ id: 'eng', managerEmployeeId: 'mgr-1', status: 'ACTIVE' })
+    expect(departmentBulkPatch({ status: '__keep__', manager: '__keep__' })).toBeNull()
+    expect(departmentWriteFromBulk(engineering, { status: 'INACTIVE', managerEmployeeId: null })).toMatchObject({
+      code: 'ENG',
+      name: 'Engineering',
+      managerEmployeeId: null,
+      status: 'INACTIVE',
+    })
+
+    const engineer = position({ id: 'se', title: 'Software Engineer', departmentId: 'eng', level: 'IC3' })
+    expect(positionBulkPatch({ status: '__keep__', departmentId: '__keep__', levelMode: '__keep__', level: '' })).toBeNull()
+    expect(
+      positionWriteFromBulk(engineer, { departmentId: 'hr', level: null, status: 'INACTIVE' }),
+    ).toMatchObject({
+      title: 'Software Engineer',
+      departmentId: 'hr',
+      level: null,
+      status: 'INACTIVE',
+    })
+  })
+
+  it('confirms one delete by name and many deletes as a group', () => {
+    expect(bulkDeleteConfirmation('department', ['Engineering']).title).toBe('Delete Engineering?')
+    expect(bulkDeleteConfirmation('position', ['Engineer', 'Analyst']).title).toBe('Delete 2 positions?')
+  })
+
+  it('keeps going when one bulk action fails', async () => {
+    const result = await settleBulk(
+      [
+        { id: 'ok', label: 'Engineering', run: async () => undefined },
+        {
+          id: 'blocked',
+          label: 'Finance',
+          run: async () => {
+            throw new Error('Employees are still assigned')
+          },
+        },
+      ],
+      (error) => (error instanceof Error ? error.message : 'failed'),
+    )
+    expect(result.succeededIds).toEqual(['ok'])
+    expect(result.failures).toEqual(['Finance: Employees are still assigned'])
   })
 
   it('represents an empty organization as no dropdown options', () => {
