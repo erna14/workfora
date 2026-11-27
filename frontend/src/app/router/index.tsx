@@ -24,6 +24,7 @@ const OnboardingPage = lazy(() => import('../../features/onboarding/OnboardingPa
 const PayrollPage = lazy(() => import('../../features/payroll/PayrollPage'))
 const PerformancePage = lazy(() => import('../../features/performance/PerformancePage'))
 const AssetsPage = lazy(() => import('../../features/assets/AssetsPage'))
+const AssetHistoryPage = lazy(() => import('../../features/assets/AssetHistoryPage'))
 const NotificationsPage = lazy(() => import('../../features/notifications/NotificationsPage'))
 const ReportsPage = lazy(() => import('../../features/reports/ReportsPage'))
 
@@ -65,6 +66,7 @@ const appPages = [
   { path: 'payroll', element: page(<PayrollPage />) },
   { path: 'performance', element: page(<PerformancePage />) },
   { path: 'assets', element: page(<AssetsPage />) },
+  { path: 'assets-history', element: page(<AssetHistoryPage />) },
   { path: 'notifications', element: page(<NotificationsPage />) },
   { path: 'reports', element: page(<ReportsPage />) },
   { path: '*', element: <NotFoundPage /> },

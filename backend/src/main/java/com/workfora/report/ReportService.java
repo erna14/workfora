@@ -39,7 +39,7 @@ public class ReportService {
                 active,
                 leaveRequestRepository.countByStatus("PENDING"),
                 jobOpeningRepository.countByOrganizationIdAndStatus(SecurityUtils.requireOrganizationId(), "OPEN"),
-                assetRepository.countByOrganizationIdAndStatus(SecurityUtils.requireOrganizationId(), "AVAILABLE")
+                assetRepository.countByOrganizationIdAndStatusAndArchivedAtIsNull(SecurityUtils.requireOrganizationId(), "AVAILABLE")
         );
     }
 }

@@ -17,6 +17,8 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
 
     Optional<Employee> findByWorkEmailIgnoreCase(String workEmail);
 
+    Optional<Employee> findByIdAndOrganizationId(UUID id, UUID organizationId);
+
     List<Employee> findByManagerId(UUID managerId);
 
     List<Employee> findByDepartmentId(UUID departmentId);

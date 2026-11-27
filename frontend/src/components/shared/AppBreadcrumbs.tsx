@@ -17,6 +17,7 @@ const LABELS: Record<string, string> = {
   payroll: 'Payroll',
   performance: 'Performance',
   assets: 'Assets',
+  'assets-history': 'Asset history',
   notifications: 'Notifications',
   reports: 'Reports',
 }

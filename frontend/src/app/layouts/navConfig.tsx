@@ -4,6 +4,7 @@ import {
   Building2,
   CalendarDays,
   ClipboardList,
+  History,
   Clock3,
   LayoutDashboard,
   MapPin,
@@ -28,7 +29,7 @@ export interface NavGroup {
   items: NavItem[]
 }
 
-const iconProps = { size: 18, strokeWidth: 1.75 }
+const iconProps = { size: 16, strokeWidth: 1.75 }
 
 export const navGroups: NavGroup[] = [
   {
@@ -65,6 +66,7 @@ export const navGroups: NavGroup[] = [
       { label: 'Payroll', to: '/payroll', icon: <Wallet {...iconProps} /> },
       { label: 'Performance', to: '/performance', icon: <Target {...iconProps} /> },
       { label: 'Assets', to: '/assets', icon: <Package {...iconProps} /> },
+      { label: 'Asset history', to: '/assets-history', icon: <History {...iconProps} /> },
     ],
   },
   {

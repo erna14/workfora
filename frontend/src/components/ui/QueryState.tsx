@@ -1,5 +1,5 @@
-import { Alert, Button, Center, Loader, Stack, Text } from '@mantine/core'
-import { AlertCircle } from 'lucide-react'
+import { Center, Loader, Paper, Stack, Text } from '@mantine/core'
+import { AlertTriangle } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { errorMessage } from '../../utils/format'
 import { EmptyState } from './EmptyState'
@@ -40,21 +40,16 @@ export function QueryState({
 
   if (isError) {
     return (
-      <Alert
-        color="red"
-        variant="light"
-        title="Unable to load data"
-        icon={<AlertCircle size={18} />}
-      >
-        <Stack gap="sm">
-          <Text size="sm">{errorMessage(error)}</Text>
-          {onRetry ? (
-            <Button size="xs" variant="light" color="red" w="fit-content" onClick={onRetry}>
-              Try again
-            </Button>
-          ) : null}
-        </Stack>
-      </Alert>
+      <Paper withBorder>
+        <EmptyState
+          icon={<AlertTriangle size={28} />}
+          color="gray"
+          title="Couldn't load this"
+          description={loadErrorCopy(error)}
+          actionLabel={onRetry ? 'Try again' : undefined}
+          onAction={onRetry}
+        />
+      </Paper>
     )
   }
 
@@ -63,4 +58,12 @@ export function QueryState({
   }
 
   return <>{children}</>
+}
+
+function loadErrorCopy(error: unknown): string {
+  const message = errorMessage(error, '')
+  if (!message || message === 'An unexpected error occurred' || message === 'Something went wrong') {
+    return 'The information did not come back. Try again in a moment.'
+  }
+  return message
 }

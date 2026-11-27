@@ -15,6 +15,7 @@ public class AssetAssignment extends BaseEntity {
     @Column(name = "assigned_at", nullable = false) private Instant assignedAt;
     @Column(name = "returned_at") private Instant returnedAt;
     @Column(length = 1000) private String notes;
+    @Column(name = "open_asset_id") private UUID openAssetId;
     public UUID getAssetId() { return assetId; }
     public void setAssetId(UUID assetId) { this.assetId = assetId; }
     public UUID getEmployeeId() { return employeeId; }
@@ -25,4 +26,6 @@ public class AssetAssignment extends BaseEntity {
     public void setReturnedAt(Instant returnedAt) { this.returnedAt = returnedAt; }
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
+    public UUID getOpenAssetId() { return openAssetId; }
+    public void setOpenAssetId(UUID openAssetId) { this.openAssetId = openAssetId; }
 }

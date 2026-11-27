@@ -5,6 +5,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -20,6 +21,8 @@ public class Asset extends BaseEntity {
     @Column(name = "purchase_date") private LocalDate purchaseDate;
     @Column(name = "purchase_cost", precision = 12, scale = 2) private BigDecimal purchaseCost;
     @Column(length = 1000) private String notes;
+    @Column(name = "archived_at") private Instant archivedAt;
+    @Column(name = "active_asset_tag", length = 100) private String activeAssetTag;
     public UUID getOrganizationId() { return organizationId; }
     public void setOrganizationId(UUID organizationId) { this.organizationId = organizationId; }
     public UUID getCategoryId() { return categoryId; }
@@ -38,4 +41,8 @@ public class Asset extends BaseEntity {
     public void setPurchaseCost(BigDecimal purchaseCost) { this.purchaseCost = purchaseCost; }
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
+    public Instant getArchivedAt() { return archivedAt; }
+    public void setArchivedAt(Instant archivedAt) { this.archivedAt = archivedAt; }
+    public String getActiveAssetTag() { return activeAssetTag; }
+    public void setActiveAssetTag(String activeAssetTag) { this.activeAssetTag = activeAssetTag; }
 }

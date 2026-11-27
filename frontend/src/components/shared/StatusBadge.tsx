@@ -15,7 +15,9 @@ const STATUS_COLORS: Record<string, string> = {
   PRESENT: 'green',
   LATE: 'orange',
   ABSENT: 'red',
+  AVAILABLE: 'green',
   ASSIGNED: 'blue',
+  ARCHIVED: 'gray',
   RETURNED: 'gray',
   MAINTENANCE: 'orange',
 }

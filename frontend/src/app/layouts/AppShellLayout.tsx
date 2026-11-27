@@ -150,7 +150,12 @@ export function AppShellLayout() {
                     styles={{
                       root: {
                         borderRadius: 8,
-                        marginBottom: 2,
+                        marginBottom: 1,
+                        paddingBlock: 5,
+                        paddingInline: 10,
+                      },
+                      label: {
+                        fontSize: 'var(--mantine-font-size-sm)',
                       },
                     }}
                   />
